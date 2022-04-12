@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}"/>
+
+    <title>{% block title %}BreadcrumbTrail - Home{% endblock %}</title>
+
+    {% block head %}
+    {% block script_head %}{% endblock %}
+    {% endblock %}
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="/">BreadcrumbTrail</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          {% if user %}
+              {% if user.is_authenticated %}
+                <a class="nav-item nav-link text-white" id="home" href="/usersettings">{{user.mapId.upper()}}</a>
+
+                <a class="nav-item nav-link text-white" id="user_mapId" href={{url_for('views.user_trail',user_mapId=user.mapId)}}>Trails</a>
+                <!--<div class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Drop Test</a>
+                  <div role="menu" class="dropdown-menu">
+                    <a class="dropdown-item" href="#" target="_blank">Test 1</a>
+                    <a class="dropdown-item" href="#" target="_blank">Test 2</a>
+                    <a class="dropdown-item" href="h#" target="_blank">Test 3</a>
+                  </div>
+                </div>-->
+
+                <a class="nav-item nav-link text-white" id="logout" href="/logout">Logout</a>
+
+              {% else %}
+                <a class="nav-link text-white" id="login" aria-current="page" href="/login">Login</a>
+                
+                <a class="nav-item nav-link text-white" id="signup" href="/signup">Sign Up</a>
+              {% endif %}
+            {% endif %}
+        </ul>
+        <form class="form-inline my-2 my-lg-0" method="POST">
+          <input class="form-control mr-sm-2" type="search" name="search" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+      </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'error' %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% else %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              {{ message }}
+             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    {% block content%}
+    {% block script_body %}{% endblock %}
+    {% endblock %}
+
+    <!-- Quick start scripts-->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+    <script>
+      $('.alert').alert()
+    </script>
+  </body>
+
+  <footer class="bottomnavbar">
+      <a style="color: white">Created by Noel Dolores - 2022</a>
+      <a style="color: white; margin-left: 1%" href="https://www.linkedin.com/in/noeldolores/" target="_blank">LinkedIn</a>
+      <a style="color: white; margin-left: 1%" href="https://github.com/noeldolores" target="_blank">GitHub</a>
+  </footer>
+</html>

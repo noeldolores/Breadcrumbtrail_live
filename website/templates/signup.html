@@ -1,0 +1,41 @@
+{% extends "base.html" %} 
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content%}
+<div class="container">
+  <div class="row justify-content-around">
+    <div class="col-s-12 col-md-6 col-lg-5 topcol">
+      <form method="POST">
+        <br></br>
+        <h1 align="center"class="text-black p-2">Sign Up</h1>
+        <br />
+        <div class="mb-3">
+          <label for="email" class="text-black">Email Address</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="Enter email"/>
+        </div>
+        <div class="mb-3">
+          <label for="firstName" class="text-black">First Name</label>
+          <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Enter name"/>
+        </div>
+        <div class="mb-3">
+          <label for="password1" class="text-black">Password</label>
+          <input type="password" autocomplete="new-password" class="form-control" id="password1" name="password1" placeholder="Enter password"/>
+        </div>
+        <div class="mb-3">
+          <label for="password2" class="text-black">Confirm Password</label>
+          <input type="password" autocomplete="new-password" class="form-control" id="password2" name="password2" placeholder="Enter password"/>
+        </div>
+        <br />
+        <div class="container">
+          <div class="row justify-content-around">
+            <div class="col-8">
+              <button type="submit" style="width:100%;" class="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

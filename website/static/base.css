@@ -1,0 +1,14 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0px;
+}
+
+footer {
+  height: 27px; 
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  text-align: center;
+  background-color: #343a40;
+}

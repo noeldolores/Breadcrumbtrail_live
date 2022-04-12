@@ -1,0 +1,22 @@
+#dropdownMenu1 {
+  background-color: white;
+}
+
+.form-select {
+  width: 100%;
+}
+
+#deletebutton {
+  width: 100%;
+  margin-top: 5%;
+  margin-bottom: 5%;
+}
+#savebutton {
+  width: 100%;
+  margin-top: 5%;
+  margin-bottom: 15%;
+}
+
+.topcol {
+  margin-top: 10px;
+}

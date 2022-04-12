@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='usersettings.css') }}"/>
+{% if user %}
+  {% if user.is_authenticated %}
+  <form method="POST">
+    <br></br>
+    <h1 align="center" class="text-black p-2">Settings</h1>
+    <br />
+    <div class="container">
+      <div class="row justify-content-around">
+        <div class="mb-3 col-s-12 col-md-8 col-lg-2 topcol">
+          {% include "timezone.html"%}
+        </div>
+
+        <div class="mb-3 col-s-12 col-md-8 col-lg-2 topcol">
+          {% include "unitmeasure.html"%}
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+    {% if user.role != "guest" %}
+      <div class="mb-3">
+        <label for="firstName" class="text-black">First Name</label>
+        <input type="text" class="form-control" id="firstName" name="firstName" placeholder="{{firstName}}"/>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="text-black">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="{{email}}"/>
+      </div>
+
+      <div class="mb-3">
+        <label for="checkincontact" class="text-black">Check-In Contact</label>
+        {% if checkincontact %}
+          <input type="text" class="form-control" id="checkincontact" name="checkincontact" placeholder="{{checkincontact}}"/>
+        {% else %}
+          <input type="text" class="form-control" id="checkincontact" name="checkincontact" placeholder="Email or Phone you will use to remotely check in - i.e., send location"/>
+        {% endif %}
+        
+      </div>
+
+      <div class="mb-2">
+        <label for="password1" class="text-black">New Password</label>
+        <input type="password" autocomplete="new-password" class="form-control" id="password1" name="password1" placeholder="Enter password"/>
+      </div>
+      <div class="mb-2">
+        <input type="password" autocomplete="new-password" class="form-control" id="password2" name="password2" placeholder="Confirm password"/>
+      </div>
+    </div>
+
+  {% endif %}
+    <div class="container">
+      <div class="row justify-content-around">
+        <div class="col-s-4 col-md-4 col-lg-5">
+          <button type="submit" class="btn btn-primary" name="save" id="savebutton">Save</button>
+        </div>
+        <div class="col-s-4 col-md-4 col-lg-5">
+          <button type="submit" class="btn btn-danger" name="delete" value="delete" id="deletebutton">Delete Account</button>
+        </div>
+      </div>
+    </div>
+    
+  </form>
+  {% endif %}
+{% endif %}
+<script>checkbox();</script>
+{% endblock %}

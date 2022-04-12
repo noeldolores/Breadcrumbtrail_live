@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content%}
+<div class="container">
+  <div class="row justify-content-around">
+    <div class="col-s-12 col-md-6 col-lg-5 topcol">
+      <form method="POST">
+        <br></br>
+        <h1 align="center" class="text-black p-2">Login</h1>
+        <br />
+        <div class="mb-3">
+          <label for="email" class="text-black">Email Address</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="Enter email"/>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="text-black">Password</label>
+          <input type="password" autocomplete="current-password" class="form-control" id="password" name="password" placeholder="Enter password"/>
+        </div>
+        <br />
+        <div class="container">
+          <div class="row justify-content-around">
+            <div class="col-s-6 col-md-6 col-lg-5">
+              <button type="submit" class="btn btn-primary" style="width:100%">Login</button>
+            </div>
+            <div class="col-s-6 col-md-6 col-lg-5">
+              <a href="/reset_password">Forgot Password</a>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

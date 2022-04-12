@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}User's BreadcrumbTrail{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+crossorigin=""></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='user_map.css') }}">
+{% endblock %}
+
+
+
+{% block content%}
+<div class="container-fluid"> 
+  <div class="row">
+    <div class="col my-sidebar">
+      {% if active_trail %}
+      <h2 style="text-align: center">{{ active_trail['name'] }}</h2>
+
+        {% if user %}
+          {% if user.is_authenticated %}
+          <form class="form-inline savelocation" method="POST">
+            <button class="btn btn-primary" type="submit" name="save_location">Check-In</button>
+          </form>
+          {% endif %}
+        {% endif %}
+      <!--Current Route: Most Recent Marker-->
+      <h5 style="text-align: center; margin-top: 5px">Last Check-In:</h5>
+      <h5 style="text-align: center">{{ user_trails[0]['markers'][0]['date'] }} - 4:12pm</h5>
+      <h5 style="text-align: center">Lat: 123, Lon: 123</h5>
+      <h5 style="text-align: center">Sunny</h5>
+      <h5 style="text-align: center">75F</h5>
+      {% endif %}
+      
+      {% if user %}
+        {% if user.is_authenticated %}
+      <form class="trail_list" method="POST">
+      {% if user_trails is not none %}
+        {% if user_trails|length < 1 %}
+        <h3>Welcome!</h3>
+        <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+        <button class="btn btn-success sidebar_buttons" type="submit" name="create_trail">Create</button>
+        {% else %}
+        <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+        <button class="btn btn-outline-success sidebar_buttons" type="submit" name="create_trail">New Trail</button>
+
+        <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>
+        {% endif %}
+      {% endif %}
+      </form>
+        {% endif %}
+      {% endif %}
+
+      <form class="trail_list" method="POST">
+      {% if user_trails is not none %}
+        {% if user_trails|length > 0%}
+        <!--User Trails-->
+        <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
+        {%for i in range(0, user_trails|length)%}
+          {%if user_trails[i]['id'] != active_trail['id']%}
+          <button class="btn btn-outline-secondary sidebar_buttons" type="submit" name="select_trail" value="{{user_trails[i]['id']}}">{{user_trails[i]['name']}}</button>
+          {% endif %}
+        {% endfor %}
+        {% endif %}
+      {% endif %}
+      </form>
+
+    </div>
+
+    <div id="map" class="col"></div>
+  </div>
+</div>
+
+{% block script_body %}
+{% if user_trails %}
+<!-- Center on first coordinate -->
+<script>
+  var marker_data = {{ user_trails|tojson }};
+  var map = L.map('map', {
+    center: [marker_data[0]['markers'][0].lat, marker_data[0]['markers'][0].lon],
+    zoom: 12
+  
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+</script>
+
+<!-- Add Markers and Lines -->
+<script>
+  var checkin_icon = L.icon({
+    iconUrl: '/static/images/dot.png',
+    iconSize: [24, 24],
+    iconAnchor: [12,12],
+    popupAnchor: [0, -8]
+  })
+
+  var latlngs = [];
+  var i = 0;
+  {% for marker in user_trails[0]['markers'] %}
+    if (i == 0) {
+      L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}]).addTo(map).bindPopup("{{ marker['popup'] }} {{ marker['date'] }}").openPopup();
+    } else {
+      L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup("{{ marker['popup'] }} {{ marker['date'] }}");
+    }
+    i++;
+      
+    latlngs.push([{{marker['lat']}}, {{marker['lon']}}]);
+  {% endfor %}
+
+  var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+</script>
+
+{% else %}
+
+<script>
+  var map = L.map('map', {
+    center: [43.8041, -120.5542],
+    zoom: 7
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+</script>
+{% endif %}
+
+{% endblock %}
+{% endblock %}

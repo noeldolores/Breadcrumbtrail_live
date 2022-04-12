@@ -1,0 +1,32 @@
+#map {
+  height: calc(100vh - 29px - 54px); /* 29px: footer height, 29px: navbar height*/ 
+  width: 100%;
+  max-height: calc(100vh - 29px - 54px);
+}
+
+.my-sidebar {
+  -ms-flex: 0 0 15vw;
+  flex: 0 0 15vw;
+  height: calc(100vh - 29px - 54px);
+  overflow-y:scroll;
+  min-width: 12rem;
+}
+
+.savelocation {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.trail_list {
+  margin-top: 1rem;
+  display:flex;
+  align-items:center;
+  flex-direction:column;
+}
+
+.sidebar_buttons {
+  margin-top: 0.25rem;
+  width: 100%;
+  text-align: center;
+}
