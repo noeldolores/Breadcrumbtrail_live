@@ -52,6 +52,7 @@ def create_trail():
   if 'create_trail' in request.form:
     trail_name = str(request.form['new_trail_name'])
     
+    user = User.query.filter_by(email=current_user.email).first()
     current_trails_sql = Trail.query.join(User, Trail.user_id==current_user.id).all()
     current_trail_names = []
     for trail in current_trails_sql:
@@ -62,7 +63,7 @@ def create_trail():
       trail = Trail(
         name=trail_name,
         datetime=utc_now,
-        user_id=current_user.id
+        user=user
       )
       db.session.add(trail)
       db.session.commit()
@@ -77,6 +78,30 @@ def select_trail():
     selected_trail = str(request.form['select_trail'])
     return selected_trail
   return None
+
+
+def list_from_marker_class(markers):
+  marker_list = []
+  if len(markers) > 0:
+    for marker in markers:
+      marker_list.append(
+        {
+          "date":marker.datetime.strftime("%m/%d/%Y"),
+          "time":marker.datetime.strftime("%H:%M:%S"),
+          "lat":float("{0:.4f}".format(marker.lat)),
+          "lon":float("{0:.4f}".format(marker.lon)),
+          "elevation":marker.elevation,
+          "temp":marker.temp,
+          "humidity":marker.humidity,
+          "airquality":marker.airquality,
+          "weather":marker.weather,
+          'popup': marker.datetime.strftime("%m/%d/%Y %H:%M:%S")
+        }
+      )
+    
+    return marker_list[::-1]
+  return None
+
 
 
 @views.route('/')
@@ -101,40 +126,29 @@ def home():
 @views.route('/<user_mapId>', methods=['GET', 'POST'])
 def user_trail(user_mapId):
   user_match = User.query.filter_by(mapId=user_mapId).first()
-
-  if user_match:    
-    user_trails = []
-    sql_trails = user_match.trails
-    for trail in sql_trails:
-      user_trails.append(
-        {
-          "id": trail.id,
-          "name": trail.name,
-          "date_started": trail.datetime,
-          "markers": [
-            {
-          'lat':45.4943,
-             'lon':-122.8670,
-             'time': 0,
-             'date': "4/1/22",
-             'popup':'Current Location'
-             },
-             {
-             'lat':45.4269,
-             'lon':-122.7784,
-             'time': 0,
-             'date': "3/6/22",
-             'popup':'Checked in on'
-             } 
-          ]
-        }
-      )
-
+  
+  if user_match:
     if current_user.is_authenticated:
+      user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
+      
       if current_user.current_trail:
-        active_trail = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
-      elif len(user_trails) > 0:
-        active_trail = user_trails[0]
+        active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
+        active_trail = {
+          "id": active_trail_match.id,
+          "name":active_trail_match.name,
+          "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+          "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+          "markers": list_from_marker_class(active_trail_match.markers)
+        }
+      elif len(user_trails) == 1:
+        active_trail_match = user_trails[0]
+        active_trail = {
+          "id": active_trail_match.id,
+          "name":active_trail_match.name,
+          "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+          "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+          "markers":list_from_marker_class(active_trail_match.markers)
+        }
       else:
         active_trail = None
       
@@ -147,8 +161,15 @@ def user_trail(user_mapId):
         
         createTrail_request = create_trail()
         if createTrail_request:
-          active_trail = createTrail_request
-          current_user.current_trail = active_trail.id
+          active_trail_match = createTrail_request
+          current_user.current_trail = active_trail_match.id
+          active_trail = {
+            "id": active_trail_match.id,
+            "name":active_trail_match.name,
+            "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+            "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+            "markers":list_from_marker_class(active_trail_match.markers)
+          }
           db.session.commit()
           return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
           
@@ -156,12 +177,42 @@ def user_trail(user_mapId):
         if selected_trail:
           current_user.current_trail = selected_trail
           db.session.commit()
-          active_trail = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==selected_trail).first()
+          active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==selected_trail).first()
+          active_trail = {
+            "id": active_trail_match.id,
+            "name":active_trail_match.name,
+            "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+            "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+            "markers":list_from_marker_class(active_trail_match.markers)
+          }
           
         if "test_button" in request.form:
           email_bot.main()
+          return redirect(url_for('views.user_trail',user_mapId=current_user.mapId)) 
+          
+      settings = json.loads(current_user.settings)
     else:
-      active_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first() 
+      user_trails = []
+      sql_trails = user_match.trails
+      for trail in sql_trails:
+        user_trails.append(
+          {
+            "id": trail.id,
+            "name": trail.name,
+            "date":trail.datetime.strftime("%b %d, %Y"),
+            "time":trail.datetime.strftime("%-I:%M%p"),
+            "markers": list_from_marker_class(trail.markers)
+          }
+        )
+        
+      active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first() 
+      active_trail = {
+        "id": active_trail_match.id,
+        "name":active_trail_match.name,
+        "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+        "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+        "markers":list_from_marker_class(active_trail_match.markers)
+      }
       
       if request.method == 'POST':
         user_mapId_search = user_search()
@@ -170,10 +221,17 @@ def user_trail(user_mapId):
         
         selected_trail = select_trail()
         if selected_trail:
-          active_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
-          print(active_trail)
+          active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
+          active_trail = {
+            "id": active_trail_match.id,
+            "name":active_trail_match.name,
+            "date":active_trail_match.datetime.strftime("%b %d, %Y"),
+            "time":active_trail_match.datetime.strftime("%-I:%M%p"),
+            "markers":list_from_marker_class(active_trail_match.markers)
+          }
+      settings = {'unitmeasure':'Metric'}
       
-    return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail)
+    return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'])
   else:
     return redirect(url_for('views.home'))
 

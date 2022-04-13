@@ -97,9 +97,10 @@ def signup():
         'unitmeasure':'Metric'
       }
       
+      checkincontact = email
       mapId = generate_user_mapId(firstName.lower())
       
-      new_user = User(email=email, firstName=firstName, mapId=mapId, password=generate_password_hash(password1, method='sha256'), role="basic",
+      new_user = User(email=email, firstName=firstName, mapId=mapId, checkincontact= checkincontact, password=generate_password_hash(password1, method='sha256'), role="basic",
                       settings=json.dumps(user_settings))
       db.session.add(new_user)
       db.session.commit()

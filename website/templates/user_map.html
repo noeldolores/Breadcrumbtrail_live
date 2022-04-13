@@ -19,7 +19,7 @@ crossorigin=""></script>
   <div class="row">
     <div class="col my-sidebar">
       {% if active_trail %}
-      <h2 style="text-align: center">{{ active_trail['name'] }}</h2>
+        <h2 style="text-align: center">{{ active_trail['name'] }}</h2>
 
         {% if user %}
           {% if user.is_authenticated %}
@@ -28,12 +28,19 @@ crossorigin=""></script>
           </form>
           {% endif %}
         {% endif %}
-      <!--Current Route: Most Recent Marker-->
-      <h5 style="text-align: center; margin-top: 5px">Last Check-In:</h5>
-      <h5 style="text-align: center">{{ user_trails[0]['markers'][0]['date'] }} - 4:12pm</h5>
-      <h5 style="text-align: center">Lat: 123, Lon: 123</h5>
-      <h5 style="text-align: center">Sunny</h5>
-      <h5 style="text-align: center">75F</h5>
+        <!--Current Route: Most Recent Marker-->
+        {% if active_trail['markers'] %}
+        <h4 style="text-align: center; margin-top: 5px">Last Check-In:</h4>
+        <h5 style="text-align: center">{{ active_trail['date'] }} @{{ active_trail['time'] }}</h5> 
+      
+        <h5 style="text-align: center">Lat: {{'%0.4f'| format(active_trail['markers'][0]['lat']|float) }}, Lon: {{'%0.4f'| format(active_trail['markers'][0]['lon']|float) }}</h5>
+        <h5 style="text-align: center">{{ active_trail['markers'][0]['weather'].capitalize() }}</h5>
+          {% if unitmeasure == "Metric" %}
+          <h5 style="text-align: center">{{ '%0.2f'| format(active_trail['markers'][0]['temp'] -273.15|float) }}&#xb0;C</h5>
+          {% else %}
+          <h5 style="text-align: center">{{ '%0.2f'| format((active_trail['markers'][0]['temp'] -273.15) * 1.8 + 32|float)}}&#xb0;F</h5>
+          {% endif %}
+        {% endif %}
       {% endif %}
       
       {% if user %}
@@ -76,47 +83,60 @@ crossorigin=""></script>
 </div>
 
 {% block script_body %}
-{% if user_trails %}
-<!-- Center on first coordinate -->
-<script>
-  var marker_data = {{ user_trails|tojson }};
-  var map = L.map('map', {
-    center: [marker_data[0]['markers'][0].lat, marker_data[0]['markers'][0].lon],
-    zoom: 12
-  
-  });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
-</script>
+{% if active_trail %}
+  {% if active_trail['markers'] %}
+  <!-- Center on first coordinate -->
+  <script>
+    var marker_data = JSON.parse('{{active_trail | tojson}}');
+    console.log(marker_data)
+    var map = L.map('map', {
+      center: [marker_data['markers'][0].lat, marker_data['markers'][0].lon],
+      zoom: 12
+    
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+  </script>
 
-<!-- Add Markers and Lines -->
-<script>
-  var checkin_icon = L.icon({
-    iconUrl: '/static/images/dot.png',
-    iconSize: [24, 24],
-    iconAnchor: [12,12],
-    popupAnchor: [0, -8]
-  })
+  <!-- Add Markers and Lines -->
+  <script>
+    var checkin_icon = L.icon({
+      iconUrl: '/static/images/dot.png',
+      iconSize: [24, 24],
+      iconAnchor: [12,12],
+      popupAnchor: [0, -8]
+    })
 
-  var latlngs = [];
-  var i = 0;
-  {% for marker in user_trails[0]['markers'] %}
-    if (i == 0) {
-      L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}]).addTo(map).bindPopup("{{ marker['popup'] }} {{ marker['date'] }}").openPopup();
-    } else {
-      L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup("{{ marker['popup'] }} {{ marker['date'] }}");
-    }
-    i++;
-      
-    latlngs.push([{{marker['lat']}}, {{marker['lon']}}]);
-  {% endfor %}
+    var latlngs = [];
+    var i = 0;
+    {% for marker in active_trail['markers'] %}
+      if (i == 0) {
+        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}]).addTo(map).bindPopup("{{ marker['popup'] }}").openPopup();
+      } else {
+        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup("{{ marker['popup'] }}");
+      }
+      i++;
+        
+      latlngs.push([{{marker['lat']}}, {{marker['lon']}}]);
+    {% endfor %}
 
-  var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
-</script>
+    var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+  </script>
 
+  {% else %}
+
+  <script>
+    var map = L.map('map', {
+      center: [43.8041, -120.5542],
+      zoom: 7
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+  </script>
+  {% endif %}
 {% else %}
-
 <script>
   var map = L.map('map', {
     center: [43.8041, -120.5542],
