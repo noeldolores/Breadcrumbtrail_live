@@ -33,13 +33,16 @@ crossorigin=""></script>
         <h4 style="text-align: center; margin-top: 5px">Last Check-In:</h4>
         <h5 style="text-align: center">{{ active_trail['date'] }} @{{ active_trail['time'] }}</h5> 
       
-        <h5 style="text-align: center">Lat: {{'%0.4f'| format(active_trail['markers'][0]['lat']|float) }}, Lon: {{'%0.4f'| format(active_trail['markers'][0]['lon']|float) }}</h5>
-        <h5 style="text-align: center">{{ active_trail['markers'][0]['weather'].capitalize() }}</h5>
+        <h5 style="text-align: center">Latitude: {{'%0.4f'| format(active_trail['markers'][0]['lat']|float) }}</h5>
+        <h5 style="text-align: center">Longitude: {{'%0.4f'| format(active_trail['markers'][0]['lon']|float) }}</h5>
+        <h5 style="text-align: center">Weather: {{ active_trail['markers'][0]['weather'].capitalize() }}</h5>
           {% if unitmeasure == "Metric" %}
-          <h5 style="text-align: center">{{ '%0.2f'| format(active_trail['markers'][0]['temp'] -273.15|float) }}&#xb0;C</h5>
+          <h5 style="text-align: center">Temp: {{ '%0.2f'| format(active_trail['markers'][0]['temp'] -273.15|float) }}&#xb0;C</h5>
           {% else %}
-          <h5 style="text-align: center">{{ '%0.2f'| format((active_trail['markers'][0]['temp'] -273.15) * 1.8 + 32|float)}}&#xb0;F</h5>
+          <h5 style="text-align: center">Temp: {{ '%0.2f'| format((active_trail['markers'][0]['temp'] -273.15) * 1.8 + 32|float)}}&#xb0;F</h5>
           {% endif %}
+          <h5 style="text-align: center">Humidity: {{ active_trail['markers'][0]['humidity'] }}%</h5>
+          <h5 style="text-align: center">Air Quality: {{ active_trail['markers'][0]['airquality'] }}</h5> 
         {% endif %}
       {% endif %}
       

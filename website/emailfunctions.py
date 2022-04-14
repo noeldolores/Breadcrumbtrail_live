@@ -36,6 +36,7 @@ def Get_Message_Info(service, userId, message_id):
     """
   message_info = service.users().messages().get(userId=userId, id=message_id).execute()
 
+  #print(message_info)
   ID = message_info['id']
   message_body = message_info['snippet']
   header_info = message_info['payload']['headers']
