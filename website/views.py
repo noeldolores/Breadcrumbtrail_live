@@ -12,6 +12,7 @@ import pytz
 from sqlalchemy import desc, select
 import re
 from . import email_bot
+from config import Config
 
 
 views = Blueprint('views', __name__)
@@ -212,7 +213,8 @@ def user_trail(user_mapId):
           active_trail = load_active_trail(active_trail_match)
       settings = {'unitmeasure':'Metric'}
     
-    return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'])
+    mapbox_api = Config.MAPBOX_API
+    return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'], mapbox_api=mapbox_api)
   else:
     return redirect(url_for('views.home'))
 

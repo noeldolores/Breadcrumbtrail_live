@@ -8,7 +8,7 @@
   -ms-flex: 0 0 15vw;
   flex: 0 0 15vw;
   height: calc(100vh - 29px - 54px);
-  overflow-y:scroll;
+  overflow-y:auto;
   min-width: 12rem;
 }
 
