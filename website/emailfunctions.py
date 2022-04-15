@@ -7,7 +7,9 @@
 # from email.mime.base import MIMEBase
 # from email import encoders
 # import mimetypes
-
+import base64  
+import email
+import re
 
 def Get_Unread_Messages(service, userId):
   """Retrieves all unread messages, returns list of message ids.
@@ -34,9 +36,22 @@ def Get_Message_Info(service, userId, message_id):
                 can be used to indicate the authenticated user.
             message_id: Identifies specific message to interact with.
     """
-  message_info = service.users().messages().get(userId=userId, id=message_id).execute()
+  
+  
+  message_full = service.users().messages().get(userId=userId, id=message_id, format='raw').execute()
+  msg_str = base64.urlsafe_b64decode(message_full['raw'].encode())
+  
+  mime_msg = str(email.message_from_bytes(msg_str))
+  mime_msg = mime_msg.replace('=C2=B0','')
+  print(mime_msg)
+  msg_parse = re.search(r"Content\-Type: text/plain;([\s\S]*)Content\-Type: text/html", mime_msg)
+  if msg_parse:
+    msg_full = msg_parse.group(1)
+  else:
+    msg_full = None
 
-  #print(message_info)
+  message_info = service.users().messages().get(userId=userId, id=message_id).execute()
+    
   ID = message_info['id']
   message_body = message_info['snippet']
   header_info = message_info['payload']['headers']
@@ -51,7 +66,8 @@ def Get_Message_Info(service, userId, message_id):
   info = {"ID": ID,
           "sender": sender, 
           "date": date, 
-          "message_body": message_body}
+          "message_body": message_body,
+          "message_full": msg_full}
   return info
 
 

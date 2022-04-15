@@ -27,43 +27,58 @@ def main():
   
   #  Checks for and retrieves unread messages with attachments
   message_info_list = emailfunctions.Get_Unread_Messages(service, 'me')
+
   if len(message_info_list) > 0:
     for message in message_info_list:
       info = emailfunctions.Get_Message_Info(service, 'me', message)
-
       ID = info['ID']
       sender= info['sender']
       date= info["date"]
       message_body = info["message_body"]
+      message_full = info["message_full"]
+      
+      if message_full is None:
+        message_full = message_body
       
       # Match sender to user table
-      checkincontact = None
-      # Email Parse
-      if "<" in sender:
-        test_reg = re.search(r"<(\S*)>", sender)
-        if test_reg:
-          checkincontact = test_reg.group(1)
-        else:
-          print("No Email Match")
-      # Phone Number Parse
+      priv_key_match = None
+      priv_key_search = re.search(r"([a-z]{2}#[0-9]{4})", message_body.lower())
+      if priv_key_search:
+        priv_key_match = priv_key_search.group(1).upper()
       else:
-        test_reg = re.search(r"(\d{10})@", sender)
-        if test_reg:
-          checkincontact = test_reg.group(1)
-        else:
-          print("No Phone Number Match")
+        print("No match found")
+
+      # # Email Parse
+      # if "<no.reply.inreach@garmin.com>" in sender:
+      #   # Garmin check-in email - match user first+last name
+      #   test_reg = re.search(r"([\s\S]*) \(", sender)
+      #   if test_reg:
+      #     checkincontact = test_reg.group(1)
+      #   else:
+      #     print("No Email Match")
+      # elif "<" in sender:
+      #   # Regular email check-in - match user email
+      #   test_reg = re.search(r"<(\S*)>", sender)
+      #   if test_reg:
+      #     checkincontact = test_reg.group(1)
+      #   else:
+      #     print("No Email Match")
+      # # Phone Number Parse
+      # else:
+      #   # Text check-in - match user phone
+      #   test_reg = re.search(r"(\d{10})@", sender)
+      #   if test_reg:
+      #     checkincontact = test_reg.group(1)
+      #   else:
+      #     print("No Phone Number Match")
           
-      if checkincontact is not None:
+      if priv_key_match is not None:
         # User Check
-        user_match = User.query.filter_by(checkincontact=checkincontact).first()
+        user_match = User.query.filter_by(private_key=priv_key_match).first()
         if user_match:
           # User Current Trail Check
           user_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
-          if user_trail:
-            pass
-          else:
-            print("No Trail Match")
-            
+
           # Coordinates Parse
           coordinates = {
             "latitude": None,
@@ -72,7 +87,7 @@ def main():
           # Latitude
           latitude = None
           direction = ""
-          lat_parse = re.search(r"^[\s\S]*?(\-?\d{2}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_body)
+          lat_parse = re.search(r"^[\s\S]*?(\-?\d{2}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_full)
           if lat_parse:
             if lat_parse.group(1):
               latitude = lat_parse.group(1)
@@ -83,7 +98,7 @@ def main():
           # Longitude
           longitude = None
           direction = ""
-          lon_parse = re.search(r"^[\s\S]*?(\-?\d{3}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_body)
+          lon_parse = re.search(r"^[\s\S]*?(\-?\d{3}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_full)
           if lon_parse:
             if lon_parse.group(1):
               longitude = lon_parse.group(1)
@@ -91,7 +106,12 @@ def main():
                 if "w" in lon_parse.group(2).lower():
                   direction = "-"
           coordinates['longitude'] = direction + longitude
-      
+        else:
+          user_trail = None
+          coordinates = {
+            "latitude": -1,
+            "longitude": -1
+          }
       
         # Convert Email date/time to datetime
         datetime_object = parser.parse(date)
@@ -106,9 +126,17 @@ def main():
           data_json = json.loads(str(soup))
         else:
           print(f"Error with Weather API. Coords: {coordinates['latitude']}, {coordinates['longitude']}")
-          data_json['main']['temp'] = -1
-          data_json['main']['humidity'] = -1
-          data_json['weather'][0]['description'] = -1
+          data_json = {
+            'main': {
+              'temp': -1,
+              'humidity': -1
+            },
+            'weather': [
+              {
+                'description': -1
+              }
+            ]
+          }
           
         
         # Grab Elevation from Open-Elevation API

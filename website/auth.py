@@ -28,6 +28,17 @@ def generate_user_mapId(firstname):
     return mapId
   
   
+def generate_private_key(firstname, lastname):
+  num = generate_fourdigits()
+  priv_key = str(firstname[0]) + str(lastname[0]) + "#" + str(num)
+  existing_priv_key= User.query.filter_by(private_key=priv_key).first()
+  while existing_priv_key is not None:
+    num = generate_fourdigits()
+    priv_key = str(firstname[0]) + str(lastname[0]) + "#" + str(num)
+    existing_priv_key= User.query.filter_by(private_key=priv_key).first()
+  else:
+    return priv_key
+  
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -77,6 +88,7 @@ def signup():
   if request.method == 'POST':
     email = str(escape(request.form.get('email'))).lower()
     firstName = str(escape(request.form.get('firstName')))
+    lastName = str(escape(request.form.get('lastName')))
     password1 = str(escape(request.form.get('password1')))
     password2 = str(escape(request.form.get('password2')))
 
@@ -97,10 +109,10 @@ def signup():
         'unitmeasure':'Metric'
       }
       
-      checkincontact = email
       mapId = generate_user_mapId(firstName.lower())
+      priv_key = generate_private_key(firstName, lastName)
       
-      new_user = User(email=email, firstName=firstName, mapId=mapId, checkincontact= checkincontact, password=generate_password_hash(password1, method='sha256'), role="basic",
+      new_user = User(email=email, firstName=firstName, lastName=lastName, mapId=mapId, private_key= priv_key, password=generate_password_hash(password1, method='sha256'), role="basic",
                       settings=json.dumps(user_settings))
       db.session.add(new_user)
       db.session.commit()

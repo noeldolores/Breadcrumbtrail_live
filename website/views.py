@@ -237,8 +237,8 @@ def usersettings():
 
       if current_user.role != "guest":
         firstName = str((request.form.get('firstName')))
+        lastName = str((request.form.get('lastName')))
         email = str((request.form.get('email')))
-        checkincontact = str(escape(request.form.get('checkincontact')))
         password1 = str((request.form.get('password1')))
         password2 = str((request.form.get('password2')))
 
@@ -250,7 +250,17 @@ def usersettings():
           flash(f'Name is already {firstName}', category='error')
         else:
           current_user.firstName = firstName
-          changes.append("Display Name")
+          changes.append("First Name")
+          
+        if len(lastName) == 0:
+          pass
+        elif len(lastName) < 2:
+          flash('Name must be at least 2 characters', category='error')
+        elif current_user.lastName == lastName:
+          flash(f'Name is already {lastName}', category='error')
+        else:
+          current_user.lastName = lastName
+          changes.append("Last Name")
           
         if len(email) == 0:
           pass
@@ -263,18 +273,6 @@ def usersettings():
           else:
             current_user.email = email
             changes.append("Email")
-
-        if len(checkincontact) == 0:
-          pass
-        elif len(checkincontact) < 4:
-          flash('Email must be greater than 4 characters', category='error')
-        else:
-          checkincontact_exists = User.query.filter_by(checkincontact=checkincontact).first()
-          if checkincontact_exists:
-            flash('Contact already exists.', category='error')
-          else:
-            current_user.checkincontact = checkincontact
-            changes.append("Check-in Contact")
 
         if len(password1) == 0:
           pass
@@ -314,4 +312,4 @@ def usersettings():
         user_settings = json.loads(current_user.settings)
         flash(f'Settings Saved: {", ".join(changes)}', category='success')
 
-    return render_template('usersettings.html', user=current_user, firstName=current_user.firstName, email=current_user.email, checkincontact=current_user.checkincontact, settings=user_settings)
+    return render_template('usersettings.html', user=current_user, lastName=current_user.lastName, firstName=current_user.firstName, email=current_user.email, settings=user_settings, priv_key=current_user.private_key)

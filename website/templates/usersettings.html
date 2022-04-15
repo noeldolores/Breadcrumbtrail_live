@@ -25,23 +25,23 @@
     <div class="container">
     {% if user.role != "guest" %}
       <div class="mb-3">
+        <label for="priv_key" class="text-black">Private Key</label>
+        <input disabled type="text" class="form-control" id="priv_key" name="priv_key" placeholder="{{priv_key}}"/>
+      </div>
+
+      <div class="mb-3">
         <label for="firstName" class="text-black">First Name</label>
         <input type="text" class="form-control" id="firstName" name="firstName" placeholder="{{firstName}}"/>
       </div>
 
       <div class="mb-3">
-        <label for="email" class="text-black">Email Address</label>
-        <input type="email" class="form-control" id="email" name="email" placeholder="{{email}}"/>
+        <label for="lastName" class="text-black">Last Name</label>
+        <input type="text" class="form-control" id="lastName" name="lastName" placeholder="{{lastName}}"/>
       </div>
 
       <div class="mb-3">
-        <label for="checkincontact" class="text-black">Check-In Contact</label>
-        {% if checkincontact %}
-          <input type="text" class="form-control" id="checkincontact" name="checkincontact" placeholder="{{checkincontact}}"/>
-        {% else %}
-          <input type="text" class="form-control" id="checkincontact" name="checkincontact" placeholder="Email or Phone you will use to remotely check in - i.e., send location"/>
-        {% endif %}
-        
+        <label for="email" class="text-black">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="{{email}}"/>
       </div>
 
       <div class="mb-2">
