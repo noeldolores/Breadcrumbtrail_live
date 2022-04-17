@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-from datetime import datetime
 import re
-from . import db, gmailservice, emailfunctions
+from . import db, emailfunctions
 from .models import User, Marker, Trail
-from dateutil import parser
-from dotenv import dotenv_values
 from config import Config
 import requests
 from bs4 import BeautifulSoup
@@ -15,30 +12,14 @@ import decimal
 
 
 def main():
-  _path = "/home/noel/python_projects/map_app/"
+  mailbox = emailfunctions.connect_to_mail()
+  message_info_list = emailfunctions.get_unread_message_info(mailbox)
   
-  # Connects to google gmail service
-  CLIENT_SECRET_FILE = _path + "client_secret.json"
-  API_NAME = 'gmail'
-  API_VERSION = 'v1'
-  SCOPES = ['https://mail.google.com/']
-  service = gmailservice.Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
-
-  
-  #  Checks for and retrieves unread messages with attachments
-  message_info_list = emailfunctions.Get_Unread_Messages(service, 'me')
-
   if len(message_info_list) > 0:
     for message in message_info_list:
-      info = emailfunctions.Get_Message_Info(service, 'me', message)
-      ID = info['ID']
-      sender= info['sender']
-      date= info["date"]
-      message_body = info["message_body"]
-      message_full = info["message_full"]
-      
-      if message_full is None:
-        message_full = message_body
+      ID = message['ID']
+      date= message["date"]
+      message_body = message["message_body"]
       
       # Match sender to user table
       priv_key_match = None
@@ -47,30 +28,6 @@ def main():
         priv_key_match = priv_key_search.group(1).upper()
       else:
         print("No match found")
-
-      # # Email Parse
-      # if "<no.reply.inreach@garmin.com>" in sender:
-      #   # Garmin check-in email - match user first+last name
-      #   test_reg = re.search(r"([\s\S]*) \(", sender)
-      #   if test_reg:
-      #     checkincontact = test_reg.group(1)
-      #   else:
-      #     print("No Email Match")
-      # elif "<" in sender:
-      #   # Regular email check-in - match user email
-      #   test_reg = re.search(r"<(\S*)>", sender)
-      #   if test_reg:
-      #     checkincontact = test_reg.group(1)
-      #   else:
-      #     print("No Email Match")
-      # # Phone Number Parse
-      # else:
-      #   # Text check-in - match user phone
-      #   test_reg = re.search(r"(\d{10})@", sender)
-      #   if test_reg:
-      #     checkincontact = test_reg.group(1)
-      #   else:
-      #     print("No Phone Number Match")
           
       if priv_key_match is not None:
         # User Check
@@ -87,7 +44,7 @@ def main():
           # Latitude
           latitude = None
           direction = ""
-          lat_parse = re.search(r"^[\s\S]*?(\-?\d{2}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_full)
+          lat_parse = re.search(r"^[\s\S]*?(\-?\d{2}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_body)
           if lat_parse:
             if lat_parse.group(1):
               latitude = lat_parse.group(1)
@@ -98,7 +55,7 @@ def main():
           # Longitude
           longitude = None
           direction = ""
-          lon_parse = re.search(r"^[\s\S]*?(\-?\d{3}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_full)
+          lon_parse = re.search(r"^[\s\S]*?(\-?\d{3}\.\d{4})[^a-zA-Z]*([a-zA-z])?", message_body)
           if lon_parse:
             if lon_parse.group(1):
               longitude = lon_parse.group(1)
@@ -113,10 +70,6 @@ def main():
             "longitude": -1
           }
       
-        # Convert Email date/time to datetime
-        datetime_object = parser.parse(date)
-        
-        
         # Search Weather API
         weather_api = Config.WEATHER_API
         url = f"https://api.openweathermap.org/data/2.5/weather?lat={coordinates['latitude']}&lon={coordinates['longitude']}&appid={weather_api}"
@@ -138,7 +91,6 @@ def main():
             ]
           }
           
-        
         # Grab Elevation from Open-Elevation API
         mapquest_api = Config.MAPQUEST_API
         url = f"http://open.mapquestapi.com/elevation/v1/profile?key={mapquest_api}&shapeFormat=raw&latLngCollection={coordinates['latitude']},{coordinates['longitude']}"
@@ -149,7 +101,6 @@ def main():
         else:
           print(f"Error with Elevation API. Coords: {coordinates['latitude']}, {coordinates['longitude']}")
           elevation_json['elevationProfile'][0]['height'] = -1
-        
         
         # Grab Air Quality 1(good) - 5(very poor)
         url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={coordinates['latitude']}&lon={coordinates['longitude']}&appid={weather_api}"
@@ -175,10 +126,9 @@ def main():
         except:
           aqi_desc = ""
         
-        
         # Add Data to Current Route
         marker = Marker(
-          datetime= datetime_object,
+          datetime= date,
           lat= decimal.Decimal(coordinates['latitude']),
           lon= decimal.Decimal(coordinates['longitude']),
           elevation= int(elevation_json['elevationProfile'][0]['height']),
@@ -193,7 +143,7 @@ def main():
         db.session.commit()
         
         # Delete Message
-        #emailfunctions.Delete_Message(service, userID, ID)
+        emailfunctions.delete_processed_email(mailbox, ID)
         
       else:
         print("Unable to parse sender info")
