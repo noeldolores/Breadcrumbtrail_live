@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Manage{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='manage_trails.css') }}">
+{% endblock %}
+
+{% block content%}
+<div class="container-fluid">
+  <form method="POST">
+    <br></br>
+    <h1 align="center" class="text-black p-2">Manage Trails</h1>
+    <br>
+    {% if user_trails %}
+      {% if user_trails|length > 0%}
+      <table>
+        {%for i in range(0, user_trails|length)%}
+        <tr>
+          <td align='center'><input class="btn btn-success" type=submit value='{{user_trails[i]['name']}}' style="width:100%;" disabled></td>
+          {% if user_trails[i].hidden %}
+            <td align='center'><button class="btn btn-outline-warning" type=submit name='hide_trail' value={{user_trails[i]['id']}} style="width:100%">Unhide</button></td>
+          {% else %}
+            <td align='center'><button class="btn btn-warning" type=submit name='hide_trail' value={{user_trails[i]['id']}} style="width:100%">Hide</button></td>
+          {% endif %}
+          <td align='center'><button class="btn btn-outline-danger" type=submit name='delete_trail' value={{user_trails[i]['id']}} style="width:100%">Delete</button></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% endif %}
+    {% endif %}
+  </form>
+</div>
+
+
+
+{% endblock %}

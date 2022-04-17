@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}User's BreadcrumbTrail{% endblock %}
+{% block title %}BreadcrumbTrail{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -29,15 +29,21 @@ crossorigin=""></script>
           </form>
           {% endif %}
         {% endif %}
-        <hr>
+        
         <!--Current Route: Most Recent Marker-->
         {% if active_trail['markers'] %}
-        <h4 style="text-align: center; margin-top: 5px">Last Check-In:</h4>
+        <hr>
+        <h4 style="text-align: center; margin-top: 5px">Check-In #{{ active_trail['markers'][0]['marker_num'] }}</h4>
         <h5 style="text-align: center">{{ active_trail['date'] }} @{{ active_trail['time'] }}</h5> 
       
         <h5 style="text-align: center">Latitude: {{'%0.4f'| format(active_trail['markers'][0]['lat']|float) }}</h5>
         <h5 style="text-align: center">Longitude: {{'%0.4f'| format(active_trail['markers'][0]['lon']|float) }}</h5>
-        <h5 style="text-align: center">Weather: {{ active_trail['markers'][0]['weather'].capitalize() }}</h5>
+          {% if unitmeasure == "Metric" %}
+          <h5 style="text-align: center">Elevation: {{active_trail['markers'][0]['elevation']}}m</h5>
+          {% else %}
+          <h5 style="text-align: center">Elevation: {{ '%0.0f'| format((active_trail['markers'][0]['elevation'] / 0.3048|float))}}ft</h5>
+          {% endif %}
+        <h5 style="text-align: center">Weather: {{ active_trail['markers'][0]['weather'] }}</h5>
           {% if unitmeasure == "Metric" %}
           <h5 style="text-align: center">Temp: {{ '%0.2f'| format(active_trail['markers'][0]['temp'] -273.15|float) }}&#xb0;C</h5>
           {% else %}
@@ -45,6 +51,7 @@ crossorigin=""></script>
           {% endif %}
           <h5 style="text-align: center">Humidity: {{ active_trail['markers'][0]['humidity'] }}%</h5>
           <h5 style="text-align: center">Air Quality: {{ active_trail['markers'][0]['airquality'] }}</h5> 
+          <h5 style="text-align: center">Note: {{ active_trail['markers'][0]['note'] }}</h5> 
         {% endif %}
       {% endif %}
       
@@ -53,7 +60,7 @@ crossorigin=""></script>
         <hr>
         <form class="trail_list" method="POST">
           {% if user_trails is not none %}
-            {% if user_trails|length < 1 %}
+            {% if user_trails|length == 0 %}
             <h3>Welcome!</h3>
             <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
             <button class="btn btn-success sidebar_buttons" type="submit" name="create_trail">Create</button>
@@ -76,10 +83,15 @@ crossorigin=""></script>
       {% if user_trails %}
         {% if user_trails|length > 0%}
         <!--User Trails-->
+        {%if active_trail %}
         <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
+        {% endif %}
+        
         {%for i in range(0, user_trails|length)%}
-          {%if user_trails[i]['id'] != active_trail['id']%}
-          <button class="btn btn-outline-secondary sidebar_buttons" type="submit" name="select_trail" value="{{user_trails[i]['id']}}">{{user_trails[i]['name']}}</button>
+          {%if user_trails[i]['id'] != active_trail['id'] %}
+            {%if not user_trails[i]['hidden'] %}
+              <button class="btn btn-outline-secondary sidebar_buttons" type="submit" name="select_trail" value="{{user_trails[i]['id']}}">{{user_trails[i]['name']}}</button>
+            {% endif %}
           {% endif %}
         {% endfor %}
         {% endif %}
@@ -88,7 +100,7 @@ crossorigin=""></script>
 
     </div>
 
-    <div id="map" class="col"></div>
+    <div class='col custom-popup'id="map"></div>
   </div>
 </div>
 
@@ -139,10 +151,31 @@ crossorigin=""></script>
     var latlngs = [];
     var i = 0;
     {% for marker in active_trail['markers'] %}
+      {% if unitmeasure == "Metric" %}
+      var temp = "{{ '%0.2f'| format(marker['temp'] -273.15|float) }}&#xb0;C";
+      var elevation = "{{ marker['elevation'] }}m";
+      {% else %}
+      var temp = "{{ '%0.2f'| format((marker['temp'] -273.15) * 1.8 + 32|float)}}&#xb0;F";
+      var elevation = "{{ '%0.0f'| format(marker['elevation'] / 0.3048|float) }}ft";
+      {% endif %}
+
+      var popup_data = `
+        <h4>Check-In #{{ marker['marker_num'] }}</h4> <hr style="background-color:white">
+        {{ marker['date'] }} @{{ marker['time'] }} <br>
+        Coords: {{ marker['lat'] }}, {{ marker['lon'] }} <br>
+        Elevation: ${elevation} <br>
+        Weather: {{ marker['weather'] }} <br>
+        Temp: ${temp} <br>
+        Humidity: {{ marker['humidity'] }}% <br>
+        Air Quality: {{ marker['airquality'] }} <hr style="background-color:white">
+        {% if marker['note']|length >0 %}
+        Note: {{ marker['note'] }}
+        {% endif %}
+      `
       if (i == 0) {
-        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}]).addTo(map).bindPopup("{{ marker['popup'] }}").openPopup();
+        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}]).addTo(map).bindPopup(popup_data).openPopup();
       } else {
-        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup("{{ marker['popup'] }}");
+        L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup(popup_data);
       }
       i++;
         

@@ -1,13 +1,14 @@
 #map {
-  height: calc(100vh - 29px - 54px); /* 29px: footer height, 29px: navbar height*/ 
+  height: calc(100vh - 84px); /* 29px: footer height, 54px: navbar height*/ 
   width: 100%;
-  max-height: calc(100vh - 29px - 54px);
+  
+  margin-top: 1px;
 }
 
 .my-sidebar {
   -ms-flex: 0 0 15vw;
   flex: 0 0 15vw;
-  height: calc(100vh - 29px - 54px);
+  height: calc(100vh - 84px);
   overflow-y:auto;
   min-width: 12rem;
 }
@@ -29,4 +30,14 @@
   margin-top: 0.25rem;
   width: 100%;
   text-align: center;
+}
+
+
+.custom-popup, .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background:#343a40;
+  color:#fff;
+  font-size:16px;
+  line-height:24px;
+  outline: #fff solid 1px;
+  text-align: left;
 }

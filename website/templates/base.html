@@ -30,7 +30,7 @@
               {% if user.is_authenticated %}
                 <a class="nav-item nav-link text-white" id="home" href="/usersettings">{{user.mapId.upper()}}</a>
 
-                <a class="nav-item nav-link text-white" id="user_mapId" href={{url_for('views.user_trail',user_mapId=user.mapId)}}>Trails</a>
+                <a class="nav-item nav-link text-white" id="user_mapId" href={{url_for('views.manage_trails')}}>Trails</a>
                 <!--<div class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Drop Test</a>
                   <div role="menu" class="dropdown-menu">
@@ -93,6 +93,6 @@
   <footer class="bottomnavbar">
       <a style="color: white">Created by Noel Dolores - 2022</a>
       <a style="color: white; margin-left: 1%" href="https://www.linkedin.com/in/noeldolores/" target="_blank">LinkedIn</a>
-      <a style="color: white; margin-left: 1%" href="https://github.com/noeldolores" target="_blank">GitHub</a>
+      <a style="color: white; margin-left: 1%" href="https://github.com/noeldolores/breadcrumbtrailapp" target="_blank">GitHub</a>
   </footer>
 </html>

@@ -38,12 +38,14 @@ class Trail(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(150))
   datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+  hidden = db.Column(db.Boolean)
   markers = db.relationship('Marker', backref=db.backref('trail'))
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   
   
 class Marker(db.Model):
   id = db.Column(db.Integer, primary_key=True)
+  marker_num = db.Column(db.Integer)
   datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
   lat = db.Column(DECIMAL(8,6))
   lon = db.Column(DECIMAL(9,6))
@@ -52,5 +54,5 @@ class Marker(db.Model):
   humidity = db.Column(db.Integer)
   airquality = db.Column(db.String(150))
   weather = db.Column(db.String(150))
-  #note = db.Column(db.String(300))
+  note = db.Column(db.String(300))
   trail_id = db.Column(db.Integer, db.ForeignKey(Trail.id))

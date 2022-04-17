@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from config import Config
-from imap_tools import MailBox
+from imap_tools import MailBox, AND
 
 
 
@@ -14,7 +14,7 @@ def connect_to_mail():
   
   
 def get_unread_message_info(mailbox):
-  unread_mail = mailbox.fetch(mark_seen=False)
+  unread_mail = mailbox.fetch(AND(seen=False))
   mail_list = []
   for mail in unread_mail:
     mail_list.append(

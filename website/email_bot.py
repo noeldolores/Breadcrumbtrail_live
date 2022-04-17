@@ -24,6 +24,7 @@ def main():
       # Match sender to user table
       priv_key_match = None
       priv_key_search = re.search(r"([a-z]{2}#[0-9]{4})", message_body.lower())
+      print(message_body.lower())
       if priv_key_search:
         priv_key_match = priv_key_search.group(1).upper()
       else:
@@ -35,7 +36,10 @@ def main():
         if user_match:
           # User Current Trail Check
           user_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
-
+          
+          # Marker number 
+          marker_num = len(user_trail.markers) + 1
+          
           # Coordinates Parse
           coordinates = {
             "latitude": None,
@@ -69,7 +73,19 @@ def main():
             "latitude": -1,
             "longitude": -1
           }
-      
+
+        
+        # Note Parse
+        note = ""
+        note_parse = re.search(r"message:[\"|\']([\s\S]*)[\"|\']", message_body)
+        if note_parse:
+          full_note = note_parse.group(1)
+          if len(full_note) > 300:
+            note = full_note[:300]
+          else:
+            note = full_note
+        
+        
         # Search Weather API
         weather_api = Config.WEATHER_API
         url = f"https://api.openweathermap.org/data/2.5/weather?lat={coordinates['latitude']}&lon={coordinates['longitude']}&appid={weather_api}"
@@ -128,6 +144,7 @@ def main():
         
         # Add Data to Current Route
         marker = Marker(
+          marker_num = marker_num,
           datetime= date,
           lat= decimal.Decimal(coordinates['latitude']),
           lon= decimal.Decimal(coordinates['longitude']),
@@ -135,7 +152,8 @@ def main():
           temp= int(data_json['main']['temp']),
           humidity= int(data_json['main']['humidity']),
           airquality= f"{aqi_num} - {aqi_desc}",
-          weather= data_json['weather'][0]['description'],
+          weather= data_json['weather'][0]['description'].title(),
+          note = note,
           trail = user_trail
           )
 
@@ -143,10 +161,11 @@ def main():
         db.session.commit()
         
         # Delete Message
-        emailfunctions.delete_processed_email(mailbox, ID)
+        #emailfunctions.delete_processed_email(mailbox, ID)
         
       else:
         print("Unable to parse sender info")
+        
   else:
     print("No messages to process")
 
