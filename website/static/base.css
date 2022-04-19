@@ -1,14 +1,16 @@
-html, body {
+html,body {
   height: 100%;
   width: 100%;
-  margin: 0px;
+  margin: 0;
+  position:relative;
+  overflow-y:auto;
 }
 
-footer {
-  height: 27px; 
-  width: 100%;
-  position: absolute;
-  bottom: 0;
+.footer {
+  width:100%;
+  position: fixed;
+  bottom:0;
   text-align: center;
   background-color: #343a40;
+  z-index:1;
 }

@@ -1,8 +1,11 @@
-.container-fluid {
-  width: 50%;
-}
-
 table {
   width:100%;
-  table-layout:fixed;
+  table-layout:fixed
+}
+
+@media (min-width: 768px) {
+  table {
+    width: 50%;
+    margin-left:25%;
+  }
 }

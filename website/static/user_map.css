@@ -1,9 +1,18 @@
 #map {
-  height: calc(100vh - 84px); /* 29px: footer height, 54px: navbar height*/ 
-  width: 100%;
-  
+  height: calc(100vh - 84px); /* 29px: footer height, 54px: navbar height*/
+  width:100%;
   margin-top: 1px;
+  z-index:0;
 }
+
+@media (max-width: 500px) {
+  #map {
+    height: 87vh;
+    max-width:auto;
+  }
+}
+
+
 
 .my-sidebar {
   -ms-flex: 0 0 15vw;

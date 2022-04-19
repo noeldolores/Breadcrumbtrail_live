@@ -8,38 +8,39 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import decimal
+import os
+from dotenv import load_dotenv
 
 
 
 def main():
   mailbox = emailfunctions.connect_to_mail()
   message_info_list = emailfunctions.get_unread_message_info(mailbox)
-  
+
   if len(message_info_list) > 0:
     for message in message_info_list:
       ID = message['ID']
       date= message["date"]
       message_body = message["message_body"]
-      
+
       # Match sender to user table
       priv_key_match = None
       priv_key_search = re.search(r"([a-z]{2}#[0-9]{4})", message_body.lower())
-      print(message_body.lower())
       if priv_key_search:
         priv_key_match = priv_key_search.group(1).upper()
       else:
         print("No match found")
-          
+
       if priv_key_match is not None:
         # User Check
         user_match = User.query.filter_by(private_key=priv_key_match).first()
         if user_match:
           # User Current Trail Check
           user_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
-          
-          # Marker number 
+
+          # Marker number
           marker_num = len(user_trail.markers) + 1
-          
+
           # Coordinates Parse
           coordinates = {
             "latitude": None,
@@ -74,7 +75,7 @@ def main():
             "longitude": -1
           }
 
-        
+
         # Note Parse
         note = ""
         note_parse = re.search(r"message:[\"|\']([\s\S]*)[\"|\']", message_body)
@@ -84,10 +85,11 @@ def main():
             note = full_note[:300]
           else:
             note = full_note
-        
-        
+
+
         # Search Weather API
-        weather_api = Config.WEATHER_API
+        load_dotenv()
+        weather_api = os.getenv('WEATHER_API')
         url = f"https://api.openweathermap.org/data/2.5/weather?lat={coordinates['latitude']}&lon={coordinates['longitude']}&appid={weather_api}"
         response = requests.request(method='GET', url=url)
         if response.status_code == 200:
@@ -106,9 +108,8 @@ def main():
               }
             ]
           }
-          
         # Grab Elevation from Open-Elevation API
-        mapquest_api = Config.MAPQUEST_API
+        mapquest_api = os.getenv('MAPQUEST_API')
         url = f"http://open.mapquestapi.com/elevation/v1/profile?key={mapquest_api}&shapeFormat=raw&latLngCollection={coordinates['latitude']},{coordinates['longitude']}"
         response = requests.request(method='GET', url=url)
         if response.status_code == 200:
@@ -117,7 +118,7 @@ def main():
         else:
           print(f"Error with Elevation API. Coords: {coordinates['latitude']}, {coordinates['longitude']}")
           elevation_json['elevationProfile'][0]['height'] = -1
-        
+
         # Grab Air Quality 1(good) - 5(very poor)
         url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={coordinates['latitude']}&lon={coordinates['longitude']}&appid={weather_api}"
         response = requests.request(method='GET', url=url)
@@ -128,7 +129,7 @@ def main():
         else:
           print(f"Error with Air Quality API. Coords: {coordinates['latitude']}, {coordinates['longitude']}")
           aqi_num = -1
-          
+
         aqi_descriptions = {
           "-1": "Error",
           "1": "Good",
@@ -141,7 +142,7 @@ def main():
           aqi_desc = aqi_descriptions[str(aqi_num)]
         except:
           aqi_desc = ""
-        
+
         # Add Data to Current Route
         marker = Marker(
           marker_num = marker_num,
@@ -159,13 +160,13 @@ def main():
 
         db.session.add(marker)
         db.session.commit()
-        
+
         # Delete Message
-        #emailfunctions.delete_processed_email(mailbox, ID)
-        
+        emailfunctions.delete_processed_email(mailbox, ID)
+
       else:
         print("Unable to parse sender info")
-        
+
   else:
     print("No messages to process")
 

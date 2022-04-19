@@ -1,0 +1,15 @@
+flask
+flask_login
+werkzeug
+flask_mail
+flask_sqlalchemy
+flask_migrate
+requests
+bs4
+imap_tools
+itsdangerous==2.0.1
+pytz
+flask_migrate
+mysql
+mysql-connector-python
+python-dotenv

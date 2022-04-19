@@ -1,19 +1,16 @@
-from flask import Blueprint, request, flash, session, render_template, redirect, url_for, escape
-from flask_login import current_user, login_required, login_user
+from flask import Blueprint, request, flash, render_template, redirect, url_for, escape
+from flask_login import current_user, login_required
 from datetime import datetime
 import json
-import sys
 from sqlalchemy.orm import query
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from .models import User, Marker, Trail
-import time
 import pytz
 from sqlalchemy import desc, select, delete
-import re
 from . import email_bot
-from config import Config
-
+import os
+from dotenv import load_dotenv
 
 views = Blueprint('views', __name__)
 
@@ -43,7 +40,7 @@ def user_search():
 
 def trail_checkIn():
   if 'save_location' in request.form:
-    
+
     return "Location Check-In"
   else:
     return "No Check-In Initiated"
@@ -52,13 +49,13 @@ def trail_checkIn():
 def create_trail():
   if 'create_trail' in request.form:
     trail_name = str(request.form['new_trail_name'])
-    
+
     user = User.query.filter_by(email=current_user.email).first()
     current_trails_sql = Trail.query.join(User, Trail.user_id==current_user.id).all()
     current_trail_names = []
     for trail in current_trails_sql:
       current_trail_names.append(trail.name)
-    
+
     if trail_name not in current_trail_names:
       utc_now = pytz.utc.localize(datetime.utcnow())
       trail = Trail(
@@ -73,7 +70,7 @@ def create_trail():
     else:
       flash('Trail Name Already In Use', category='error')
   return None
-  
+
 
 def select_trail():
   if 'select_trail' in request.form:
@@ -117,7 +114,7 @@ def list_from_marker_class(markers):
           "popup": marker.datetime.strftime("%m/%d/%Y %-I:%M%p")
         }
       )
-    
+
     return marker_list[::-1]
   return None
 
@@ -133,11 +130,11 @@ def load_active_trail(trail):
       "time":"",
       "markers": markers
     }
-    
+
     if markers:
       active_trail['date'] = markers[0]['date']
       active_trail['time'] = markers[0]['time']
-    
+
     return active_trail
   except:
     return None
@@ -172,7 +169,7 @@ def home():
     user_match = user_search()
     if user_match:
       return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
-    
+
   user_trails = None
 
   return render_template('user_map.html', user=current_user, user_trails=user_trails)
@@ -181,28 +178,31 @@ def home():
 @views.route('/<user_mapId>', methods=['GET', 'POST'])
 def user_trail(user_mapId):
   user_match = User.query.filter_by(mapId=user_mapId).first()
-  
+
   if user_match:
     if current_user.is_authenticated:
       user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
-      
+
       if current_user.current_trail:
         active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
         active_trail = load_active_trail(active_trail_match)
-        
+
       elif len(user_trails) == 1:
         active_trail_match = user_trails[0]
-        active_trail = load_active_trail(active_trail_match)
+        if active_trail_match.hidden:
+          active_trail = None
+        else:
+          active_trail = load_active_trail(active_trail_match)
       else:
         active_trail = None
-      
+
       if request.method == 'POST':
         user_match = user_search()
         if user_match:
           return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
-        
+
         trail_checkIn()
-        
+
         createTrail_request = create_trail()
         if createTrail_request:
           active_trail_match = createTrail_request
@@ -210,38 +210,39 @@ def user_trail(user_mapId):
           active_trail = load_active_trail(active_trail_match)
           db.session.commit()
           return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
-          
+
         selected_trail = select_trail()
         if selected_trail:
           current_user.current_trail = selected_trail
           db.session.commit()
           active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==selected_trail).first()
           active_trail = load_active_trail(active_trail_match)
-          
+
         if "test_button" in request.form:
           email_bot.main()
-          return redirect(url_for('views.user_trail',user_mapId=current_user.mapId)) 
-          
+          return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
+
       settings = json.loads(current_user.settings)
     else:
       sql_trails = user_match.trails
       user_trails = load_user_trails(sql_trails)
-        
-      active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first() 
+
+      active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
       active_trail = load_active_trail(active_trail_match)
-      
+
       if request.method == 'POST':
         user_mapId_search = user_search()
         if user_mapId_search:
           return redirect(url_for('views.user_trail',user_mapId=user_mapId_search.mapId))
-        
+
         selected_trail = select_trail()
         if selected_trail:
           active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
           active_trail = load_active_trail(active_trail_match)
       settings = {'unitmeasure':'Metric'}
-    
-    mapbox_api = Config.MAPBOX_API
+
+    load_dotenv()
+    mapbox_api = os.getenv('MAPBOX_API')
     return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'], mapbox_api=mapbox_api)
   else:
     return redirect(url_for('views.home'))
@@ -253,7 +254,7 @@ def manage_trails():
   if current_user.is_authenticated:
     user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
     trail_list = load_user_trails(user_trails)
-      
+
     if request.method == 'POST':
       delete_trail_request = delete_trail()
       if delete_trail_request:
@@ -264,15 +265,15 @@ def manage_trails():
           else:
             current_user.current_trail = None
           db.session.commit()
-        
+
         Marker.query.filter_by(trail_id=delete_trail_request).delete()
         Trail.query.filter_by(id=delete_trail_request).delete()
         db.session.commit()
-        
+
         user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
         trail_list = load_user_trails(user_trails)
         return render_template('manage_trails.html', user=current_user, user_trails=trail_list)
-      
+
       hide_trail_request = hide_trail()
       if hide_trail_request:
         if hide_trail_request.hidden == False:
@@ -281,10 +282,10 @@ def manage_trails():
           hide_trail_request.hidden = False
           if current_user.current_trail is None:
             current_user.current_trail = hide_trail_request.id
-        
+
         user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
         trail_list = load_user_trails(user_trails)
-        
+
         if current_user.current_trail == hide_trail_request.id:
           active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
           if active_trail_match.hidden:
@@ -293,15 +294,15 @@ def manage_trails():
               current_user.current_trail = int(_[0]['id'])
             else:
               current_user.current_trail = None
-              
+
         db.session.commit()
         return render_template('manage_trails.html', user=current_user, user_trails=trail_list)
-    
+
     return render_template('manage_trails.html', user=current_user, user_trails=trail_list)
   else:
     return redirect(url_for('views.home'))
-  
-  
+
+
 @views.route('/usersettings', methods=['GET', 'POST'])
 @login_required
 def usersettings():
@@ -309,7 +310,7 @@ def usersettings():
     search_request = user_search()
     if search_request is None:
       print("user not found")
-      
+
   if current_user.is_authenticated:
     user_settings = init_user_settings()
 
@@ -334,7 +335,7 @@ def usersettings():
         else:
           current_user.firstName = firstName
           changes.append("First Name")
-          
+
         if len(lastName) == 0:
           pass
         elif len(lastName) < 2:
@@ -344,7 +345,7 @@ def usersettings():
         else:
           current_user.lastName = lastName
           changes.append("Last Name")
-          
+
         if len(email) == 0:
           pass
         elif len(email) < 4:
@@ -376,7 +377,7 @@ def usersettings():
       elif user_settings['timezone'] == "None":
         user_settings['timezone'] = "UTC"
         changes.append('Timezone')
-        
+
       if unitmeasure != "None":
         if unitmeasure != user_settings['unitmeasure']:
           user_settings['unitmeasure'] = unitmeasure
@@ -396,8 +397,8 @@ def usersettings():
         flash(f'Settings Saved: {", ".join(changes)}', category='success')
 
     return render_template('usersettings.html', user=current_user, lastName=current_user.lastName, firstName=current_user.firstName, email=current_user.email, settings=user_settings, priv_key=current_user.private_key)
-  
-  
+
+
 @views.route('/deleteaccount', methods=['GET', 'POST'])
 @login_required
 def deleteaccount():

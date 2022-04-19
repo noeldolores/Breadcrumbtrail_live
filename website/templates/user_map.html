@@ -15,7 +15,7 @@ crossorigin=""></script>
 
 
 {% block content%}
-<div class="container-fluid"> 
+<div class="container-fluid">
   <div class="row">
     <div class="col my-sidebar">
       {% if active_trail %}
@@ -23,19 +23,19 @@ crossorigin=""></script>
 
         {% if user %}
           {% if user.is_authenticated %}
-          <hr>
+          <!--<hr>
           <form class="form-inline savelocation" method="POST">
             <button class="btn btn-primary" type="submit" name="save_location">Check-In</button>
-          </form>
+          </form>-->
           {% endif %}
         {% endif %}
-        
+
         <!--Current Route: Most Recent Marker-->
         {% if active_trail['markers'] %}
         <hr>
         <h4 style="text-align: center; margin-top: 5px">Check-In #{{ active_trail['markers'][0]['marker_num'] }}</h4>
-        <h5 style="text-align: center">{{ active_trail['date'] }} @{{ active_trail['time'] }}</h5> 
-      
+        <h5 style="text-align: center">{{ active_trail['date'] }} @{{ active_trail['time'] }}</h5>
+
         <h5 style="text-align: center">Latitude: {{'%0.4f'| format(active_trail['markers'][0]['lat']|float) }}</h5>
         <h5 style="text-align: center">Longitude: {{'%0.4f'| format(active_trail['markers'][0]['lon']|float) }}</h5>
           {% if unitmeasure == "Metric" %}
@@ -50,11 +50,13 @@ crossorigin=""></script>
           <h5 style="text-align: center">Temp: {{ '%0.2f'| format((active_trail['markers'][0]['temp'] -273.15) * 1.8 + 32|float)}}&#xb0;F</h5>
           {% endif %}
           <h5 style="text-align: center">Humidity: {{ active_trail['markers'][0]['humidity'] }}%</h5>
-          <h5 style="text-align: center">Air Quality: {{ active_trail['markers'][0]['airquality'] }}</h5> 
-          <h5 style="text-align: center">Note: {{ active_trail['markers'][0]['note'] }}</h5> 
+          <h5 style="text-align: center">Air Quality: {{ active_trail['markers'][0]['airquality'] }}</h5>
+          <h5 style="text-align: center">Note: {{ active_trail['markers'][0]['note'] }}</h5>
         {% endif %}
+      {% else %}
+        <h2 style="text-align: center; margin-top: 0.5rem">Create a Trail</h2>
       {% endif %}
-      
+
       {% if user %}
         {% if user.is_authenticated %}
         <hr>
@@ -67,8 +69,8 @@ crossorigin=""></script>
             {% else %}
             <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
             <button class="btn btn-outline-success sidebar_buttons" type="submit" name="create_trail">New Trail</button>
-            <!--Development Only-->
-            <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>
+            <!--Development Only
+            <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>-->
             {% endif %}
           {% endif %}
         </form>
@@ -84,9 +86,9 @@ crossorigin=""></script>
         {% if user_trails|length > 0%}
         <!--User Trails-->
         {%if active_trail %}
-        <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
+          <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
         {% endif %}
-        
+
         {%for i in range(0, user_trails|length)%}
           {%if user_trails[i]['id'] != active_trail['id'] %}
             {%if not user_trails[i]['hidden'] %}
@@ -110,12 +112,12 @@ crossorigin=""></script>
   <!-- Center on first coordinate -->
   <script>
     var marker_data = JSON.parse('{{active_trail | tojson}}');
-    
-    
+
+
     //var classic = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     //    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
    // });
-    
+
     var osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
     var osmAtt = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     var basic = L.tileLayer(osmUrl, {attribution: osmAtt});
@@ -124,7 +126,7 @@ crossorigin=""></script>
     var mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={{mapbox_api}}';
     var nature = L.tileLayer(mbUrl, {id: 'mapbox/outdoors-v11', tileSize: 512, zoomOffset: -1, attribution: mbAttr});
     var satellite = L.tileLayer(mbUrl, {id: 'mapbox/satellite-streets-v11', tileSize: 512, zoomOffset: -1, attribution: mbAttr});
-    
+
     var map = L.map('map', {
       center: [marker_data['markers'][0].lat, marker_data['markers'][0].lon],
       zoom: 12,
@@ -178,7 +180,7 @@ crossorigin=""></script>
         L.marker([{{ marker['lat'] }}, {{ marker['lon'] }}], {icon:checkin_icon}).addTo(map).bindPopup(popup_data);
       }
       i++;
-        
+
       latlngs.push([{{marker['lat']}}, {{marker['lon']}}]);
     {% endfor %}
 

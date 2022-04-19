@@ -23,7 +23,7 @@
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-    
+
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
           {% if user %}
@@ -44,7 +44,7 @@
 
               {% else %}
                 <a class="nav-link text-white" id="login" aria-current="page" href="/login">Login</a>
-                
+
                 <a class="nav-item nav-link text-white" id="signup" href="/signup">Sign Up</a>
               {% endif %}
             {% endif %}
@@ -77,7 +77,7 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-    
+
     {% block content%}
     {% block script_body %}{% endblock %}
     {% endblock %}
@@ -90,9 +90,9 @@
     </script>
   </body>
 
-  <footer class="bottomnavbar">
+  <div class="footer">
       <a style="color: white">Created by Noel Dolores - 2022</a>
       <a style="color: white; margin-left: 1%" href="https://www.linkedin.com/in/noeldolores/" target="_blank">LinkedIn</a>
       <a style="color: white; margin-left: 1%" href="https://github.com/noeldolores/breadcrumbtrailapp" target="_blank">GitHub</a>
-  </footer>
+  </div>
 </html>

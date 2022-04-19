@@ -1,5 +1,4 @@
-import imp
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session, escape
+from flask import Blueprint, render_template, request, flash, redirect, url_for, escape
 from flask_login import login_user, login_required, logout_user, current_user
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,8 +25,8 @@ def generate_user_mapId(firstname):
     existing_mapId= User.query.filter_by(mapId=mapId).first()
   else:
     return mapId
-  
-  
+
+
 def generate_private_key(firstname, lastname):
   num = generate_fourdigits()
   priv_key = str(firstname[0]) + str(lastname[0]) + "#" + str(num)
@@ -40,7 +39,7 @@ def generate_private_key(firstname, lastname):
       break
   else:
     return priv_key
-  
+
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -68,7 +67,7 @@ def login():
 @login_required
 def logout():
   logout_user()
-  return redirect(url_for('views.home'))
+  return redirect(url_for('auth.login'))
 
 
 @auth.route('/signup', methods=['GET', 'POST'])
@@ -99,10 +98,10 @@ def signup():
         'timezone':'UTC',
         'unitmeasure':'Metric'
       }
-      
+
       mapId = generate_user_mapId(firstName.lower())
       priv_key = generate_private_key(firstName, lastName)
-      
+
       new_user = User(email=email, firstName=firstName, lastName=lastName, mapId=mapId, private_key= priv_key, password=generate_password_hash(password1, method='sha256'), role="basic",
                       settings=json.dumps(user_settings))
       db.session.add(new_user)

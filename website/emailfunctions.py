@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
-from config import Config
 from imap_tools import MailBox, AND
+import os
+from dotenv import load_dotenv
 
 
 
 def connect_to_mail():
-  server = Config.MAIL_SERVER
-  username = Config.MAIL_USERNAME
-  password = Config.MAIL_PASSWORD
+  load_dotenv()
+  server = os.getenv('MAIL_SERVER_IMAP')
+  username = os.getenv('MAIL_USERNAME')
+  password = os.getenv('MAIL_PASSWORD')
   mailbox = MailBox(server).login(username, password)
   return mailbox
-  
-  
+
+
 def get_unread_message_info(mailbox):
   unread_mail = mailbox.fetch(AND(seen=False))
   mail_list = []
