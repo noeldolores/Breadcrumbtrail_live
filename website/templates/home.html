@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}BreadcrumbTrail{% endblock %}
+
+
+{% block head %}
+
+{% block script_head %}{% endblock %}
+
+{% endblock %}
+
+
+{% block content %}
+  {% if user %}
+    {% if user.is_authenticated %}
+    <div class="container">
+      <div class="row justify-content-around">
+        <div class="col-s-12 col-md-6 col-lg-5 topcol">
+
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  {% else %}
+  
+  {% endif %}
+
+{% block script_body %}{% endblock %}
+
+{% endblock %}

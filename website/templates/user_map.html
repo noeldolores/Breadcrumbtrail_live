@@ -15,15 +15,17 @@ crossorigin=""></script>
 
 
 {% block content%}
-<div class="container-fluid">
-  <div class="row">
+<div class="wrapper">
+  <!-- Sidebar  -->
+  <nav id="sidebar">
     <div class="col my-sidebar">
       {% if active_trail %}
         <h2 style="text-align: center; margin-top: 0.5rem">{{ active_trail['name'] }}</h2>
 
         {% if user %}
           {% if user.is_authenticated %}
-          <!--<hr>
+          <!--In Development
+          <hr>
           <form class="form-inline savelocation" method="POST">
             <button class="btn btn-primary" type="submit" name="save_location">Check-In</button>
           </form>-->
@@ -64,10 +66,10 @@ crossorigin=""></script>
           {% if user_trails is not none %}
             {% if user_trails|length == 0 %}
             <h3>Welcome!</h3>
-            <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+            <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
             <button class="btn btn-success sidebar_buttons" type="submit" name="create_trail">Create</button>
             {% else %}
-            <input class="form-control sidebar_buttons" type="search" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+            <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
             <button class="btn btn-outline-success sidebar_buttons" type="submit" name="create_trail">New Trail</button>
             <!--Development Only
             <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>-->
@@ -84,27 +86,44 @@ crossorigin=""></script>
       <form class="trail_list" method="POST">
       {% if user_trails %}
         {% if user_trails|length > 0%}
-        <!--User Trails-->
-        {%if active_trail %}
+          <!--User Trails-->
+          {%if active_trail %}
           <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
-        {% endif %}
-
-        {%for i in range(0, user_trails|length)%}
-          {%if user_trails[i]['id'] != active_trail['id'] %}
-            {%if not user_trails[i]['hidden'] %}
-              <button class="btn btn-outline-secondary sidebar_buttons" type="submit" name="select_trail" value="{{user_trails[i]['id']}}">{{user_trails[i]['name']}}</button>
-            {% endif %}
           {% endif %}
-        {% endfor %}
+
+          <!--<ul class="list-unstyled components">-->
+            <div class="active list-unstyled components">
+              <div href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle" id="trail_dropdown">Other Trails</div>
+                <ul class="collapse list-unstyled" id="homeSubmenu">
+                {%for i in range(0, user_trails|length)%}
+                  {%if user_trails[i]['id'] != active_trail['id'] %}
+                    {%if not user_trails[i]['hidden'] %}
+                    <li>
+                      <button class="btn btn-outline-secondary sidebar_buttons" type="submit"  id="dropdown_items" name="select_trail" value="{{user_trails[i]['id']}}">{{user_trails[i]['name']}}</button>
+                    </li>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+          <!--</ul>-->
         {% endif %}
       {% endif %}
       </form>
 
     </div>
+  </nav>
 
-    <div class='col custom-popup'id="map"></div>
+  <!-- Page Content  -->
+  <div id="content">
+    <div class='col custom-popup map-frame'id="map"></div>
+    <button type="button" id="sidebarCollapse" class="btn btn-outline-dark" onclick="this.blur();">
+        <i class="fas fa-align-left"></i>
+        <span>&#9776;</span>
+    </button>
   </div>
 </div>
+
 
 {% block script_body %}
 {% if active_trail %}
@@ -210,6 +229,19 @@ crossorigin=""></script>
   }).addTo(map);
 </script>
 {% endif %}
+
+<!-- jQuery CDN - Slim version (=without AJAX) -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<!-- Popper.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+  $(document).ready(function () {
+      $('#sidebarCollapse').on('click', function () {
+          $('#sidebar').toggleClass('active');
+      });
+  });
+</script>
 
 {% endblock %}
 {% endblock %}

@@ -2,12 +2,10 @@ from flask import Blueprint, request, flash, render_template, redirect, url_for,
 from flask_login import current_user, login_required
 from datetime import datetime
 import json
-from sqlalchemy.orm import query
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from .models import User, Marker, Trail
 import pytz
-from sqlalchemy import desc, select, delete
 from . import email_bot
 import os
 from dotenv import load_dotenv
@@ -28,14 +26,93 @@ def init_user_settings():
   return user_settings
 
 
+def change_user_settings_request(user_settings):
+  changes = []
+  timezone = str(escape(request.form.get('timezone')))
+  unitmeasure = str(escape(request.form.get('unitmeasure')))
+  firstName = str(escape(request.form.get('firstName')))
+  lastName = str(escape(request.form.get('lastName')))
+  email = str(escape(request.form.get('email')))
+  password1 = str(escape(request.form.get('password1')))
+  password2 = str(escape(request.form.get('password2')))
+
+  if len(firstName) == 0:
+    pass
+  elif len(firstName) < 2:
+    flash(f'First Name must be at least 2 letters: "{firstName}"', category='error')
+    return None
+  elif current_user.firstName == firstName:
+    flash(f'First Name is already "{firstName}"', category='error')
+    return None
+  else:
+    current_user.firstName = firstName
+    changes.append("First Name")
+
+  if len(lastName) == 0:
+    pass
+  elif len(lastName) < 1:
+    flash(f'Last Name must be at least 1 letter: "{lastName}"', category='error')
+    return None
+  elif current_user.lastName == lastName:
+    flash(f'Last Name is already {lastName}', category='error')
+    return None
+  else:
+    current_user.lastName = lastName
+    changes.append("Last Name")
+
+  if len(email) == 0:
+    pass
+  elif len(email) < 4:
+    flash(f'Email must be greater than 4 characters: "{email}"', category='error')
+    return None
+  else:
+    email_exists = User.query.filter_by(email=email).first()
+    if email_exists:
+      flash('Email already exists.', category='error')
+      return None
+    else:
+      current_user.email = email
+      changes.append("Email")
+
+  if len(password1) == 0:
+    pass
+  elif password1 != password2:
+    flash('Passwords do not match', category='error')
+    return None
+  elif len(password1) < 7:
+    flash('Password must be at least 7 characters', category='error')
+    return None
+  elif check_password_hash(current_user.password, password1):
+    flash('New password must be different than current password.', category='error')
+    return None
+  else:
+    current_user.password=generate_password_hash(password1, method='sha256')
+    changes.append("Password")
+
+  if timezone != "None":
+    if timezone != user_settings['timezone']:
+      user_settings['timezone'] = timezone
+      changes.append('Timezone')
+  elif user_settings['timezone'] == "None":
+    user_settings['timezone'] = "UTC"
+    changes.append('Timezone')
+
+  if unitmeasure != "None":
+    if unitmeasure != user_settings['unitmeasure']:
+      user_settings['unitmeasure'] = unitmeasure
+      changes.append('Units')
+  elif user_settings['unitmeasure'] == "None":
+      user_settings['unitmeasure'] = "Metric"
+      changes.append('Units')
+
+
 def user_search():
-  if 'search' in request.form:
-    user_mapId_query = str(request.form['search']).lower()
+  if request.form.keys() >= {'search'}:
+    user_mapId_query = str(escape(request.form.get('search'))).lower()
     user_match = User.query.filter_by(mapId=user_mapId_query).first()
 
     return user_match
-  else:
-    return None
+  return None
 
 
 def trail_checkIn():
@@ -47,8 +124,8 @@ def trail_checkIn():
 
 
 def create_trail():
-  if 'create_trail' in request.form:
-    trail_name = str(request.form['new_trail_name'])
+  if request.form.keys() >= {'create_trail'}:
+    trail_name = str(escape(request.form.get('new_trail_name')))
 
     user = User.query.filter_by(email=current_user.email).first()
     current_trails_sql = Trail.query.join(User, Trail.user_id==current_user.id).all()
@@ -73,22 +150,22 @@ def create_trail():
 
 
 def select_trail():
-  if 'select_trail' in request.form:
-    selected_trail = str(request.form['select_trail'])
+  if request.form.keys() >= {'select_trail'}:
+    selected_trail = str(escape(request.form.get('select_trail')))
     return selected_trail
   return None
 
 
 def delete_trail():
-  if 'delete_trail' in request.form:
-    selected_trail = str(request.form['delete_trail'])
+  if request.form.keys() >= {'delete_trail'}:
+    selected_trail = str(escape(request.form.get('delete_trail')))
     return selected_trail
   return None
 
 
 def hide_trail():
-  if 'hide_trail' in request.form:
-    _ = str(request.form['hide_trail'])
+  if request.form.keys() >= {'hide_trail'}:
+    _ = str(escape(request.form.get('hide_trail')))
     trail_match = Trail.query.filter_by(id=_).first()
     return trail_match
   return None
@@ -197,9 +274,10 @@ def user_trail(user_mapId):
         active_trail = None
 
       if request.method == 'POST':
-        user_match = user_search()
-        if user_match:
-          return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
+        if request.form.keys() >= {'search_button'}:
+          user_match = user_search()
+          if user_match:
+            return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
         trail_checkIn()
 
@@ -256,6 +334,11 @@ def manage_trails():
     trail_list = load_user_trails(user_trails)
 
     if request.method == 'POST':
+      if request.form.keys() >= {'search_button'}:
+        user_match = user_search()
+        if user_match:
+          return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
+
       delete_trail_request = delete_trail()
       if delete_trail_request:
         if str(current_user.current_trail) == str(delete_trail_request):
@@ -304,118 +387,55 @@ def manage_trails():
 
 
 @views.route('/usersettings', methods=['GET', 'POST'])
-@login_required
 def usersettings():
-  if request.method == 'POST':
-    search_request = user_search()
-    if search_request is None:
-      print("user not found")
-
   if current_user.is_authenticated:
     user_settings = init_user_settings()
 
     if request.method == 'POST':
-      changes = []
-      timezone = str((request.form.get('timezone')))
-      unitmeasure = str((request.form.get('unitmeasure')))
+      if request.form.keys() >= {'search_button'}:
+        user_match = user_search()
+        if user_match:
+          return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
-      if current_user.role != "guest":
-        firstName = str((request.form.get('firstName')))
-        lastName = str((request.form.get('lastName')))
-        email = str((request.form.get('email')))
-        password1 = str((request.form.get('password1')))
-        password2 = str((request.form.get('password2')))
+      if request.form.keys() >= {'delete'}:
+        return redirect(url_for('views.deleteaccount'))
 
-        if len(firstName) == 0:
-          pass
-        elif len(firstName) < 2:
-          flash('Name must be at least 2 characters', category='error')
-        elif current_user.firstName == firstName:
-          flash(f'Name is already {firstName}', category='error')
-        else:
-          current_user.firstName = firstName
-          changes.append("First Name")
-
-        if len(lastName) == 0:
-          pass
-        elif len(lastName) < 2:
-          flash('Name must be at least 2 characters', category='error')
-        elif current_user.lastName == lastName:
-          flash(f'Name is already {lastName}', category='error')
-        else:
-          current_user.lastName = lastName
-          changes.append("Last Name")
-
-        if len(email) == 0:
-          pass
-        elif len(email) < 4:
-          flash('Email must be greater than 4 characters', category='error')
-        else:
-          email_exists = User.query.filter_by(email=email).first()
-          if email_exists:
-            flash('Email already exists.', category='error')
-          else:
-            current_user.email = email
-            changes.append("Email")
-
-        if len(password1) == 0:
-          pass
-        elif password1 != password2:
-          flash('Passwords do not match', category='error')
-        elif len(password1) < 7:
-          flash('Password must be at least 7 characters', category='error')
-        elif check_password_hash(current_user.password, password1):
-          flash('New password must be different than current password.', category='error')
-        else:
-          current_user.password=generate_password_hash(password1, method='sha256')
-          changes.append("Password")
-
-      if timezone != "None":
-        if timezone != user_settings['timezone']:
-          user_settings['timezone'] = timezone
-          changes.append('Timezone')
-      elif user_settings['timezone'] == "None":
-        user_settings['timezone'] = "UTC"
-        changes.append('Timezone')
-
-      if unitmeasure != "None":
-        if unitmeasure != user_settings['unitmeasure']:
-          user_settings['unitmeasure'] = unitmeasure
-          changes.append('Units')
-      elif user_settings['unitmeasure'] == "None":
-          user_settings['unitmeasure'] = "Metric"
-          changes.append('Units')
-
-      if current_user.role != "guest":
-        if 'delete' in request.form:
-          return redirect(url_for('views.deleteaccount'))
-
-      if len(changes) > 0:
-        current_user.settings = json.dumps(user_settings)
-        db.session.commit()
-        user_settings = json.loads(current_user.settings)
-        flash(f'Settings Saved: {", ".join(changes)}', category='success')
+      if request.form.keys() >= {'save'}:
+        settings_changes = change_user_settings_request(user_settings)
+        if settings_changes:
+          current_user.settings = json.dumps(settings_changes[1])
+          db.session.commit()
+          user_settings = json.loads(current_user.settings)
+          flash(f'Settings Saved: {", ".join(settings_changes[0])}', category='success')
 
     return render_template('usersettings.html', user=current_user, lastName=current_user.lastName, firstName=current_user.firstName, email=current_user.email, settings=user_settings, priv_key=current_user.private_key)
+  else:
+    return redirect(url_for('views.home'))
 
 
 @views.route('/deleteaccount', methods=['GET', 'POST'])
-@login_required
 def deleteaccount():
-  if request.method == 'POST':
-    if current_user.is_authenticated:
+  if current_user.is_authenticated:
+    if request.method == 'POST':
+      if request.form.keys() >= {'search_button'}:
+        user_match = user_search()
+        if user_match:
+          return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
-      email = str(escape(request.form.get('email')))
-      password1 = str(escape(request.form.get('password1')))
+      if request.form.keys() >= {'delete'}:
+        email = str(escape(request.form.get('email')))
+        password1 = str(escape(request.form.get('password1')))
 
-      if current_user.email == email:
-        if check_password_hash(current_user.password, password1):
-          db.session.delete(current_user)
-          db.session.commit()
-          return redirect(url_for('views.home'))
+        if current_user.email == email:
+          if check_password_hash(current_user.password, password1):
+            db.session.delete(current_user)
+            db.session.commit()
+            return redirect(url_for('views.home'))
+          else:
+            flash('Incorrect Password, please try again.', category='error')
         else:
-          flash('Incorrect Password, please try again.', category='error')
-      else:
-        flash('Incorrect Email, please try again.', category='error')
+          flash('Incorrect Email, please try again.', category='error')
 
-  return render_template('deleteaccount.html', user=current_user)
+    return render_template('deleteaccount.html', user=current_user)
+  else:
+    return redirect(url_for('views.home'))

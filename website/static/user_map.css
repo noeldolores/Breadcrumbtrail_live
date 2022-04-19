@@ -1,7 +1,7 @@
 #map {
   height: calc(100vh - 84px); /* 29px: footer height, 54px: navbar height*/
-  width:100%;
   margin-top: 1px;
+  margin-bottom: 1px;
   z-index:0;
 }
 
@@ -11,8 +11,6 @@
     max-width:auto;
   }
 }
-
-
 
 .my-sidebar {
   -ms-flex: 0 0 15vw;
@@ -28,11 +26,9 @@
   margin-top: 0.5rem;
 }
 
-.trail_list {
-  margin-top: 1rem;
-  display:flex;
-  align-items:center;
-  flex-direction:column;
+li {
+  margin-top: 10px;
+  margin-bottom: -10px;
 }
 
 .sidebar_buttons {
@@ -41,7 +37,6 @@
   text-align: center;
 }
 
-
 .custom-popup, .leaflet-popup-content-wrapper, .leaflet-popup-tip {
   background:#343a40;
   color:#fff;
@@ -49,4 +44,76 @@
   line-height:24px;
   outline: #fff solid 1px;
   text-align: left;
+}
+
+
+#content {
+  position: relative;
+}
+
+#sidebarCollapse {
+  position: absolute;
+  z-index: 400;
+}
+
+.leaflet-left {
+  top: 4rem;
+}
+
+#sidebarCollapse {
+  width: 40px;
+  height: 40px;
+  top: 0.75rem;
+  left: 0.5rem;
+}
+
+.wrapper {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 84px);
+    align-items: stretch;
+    position: relative;
+}
+
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    color: #343a40;
+    transition: all 0.3s;
+}
+
+#sidebar.active {
+    margin-left: -250px;
+}
+
+.active {
+  margin-top: 1rem;
+}
+
+#sidebar div div {
+  width: 100%;
+  transition: all 0.3s;
+}
+
+#content {
+    width: 100%;
+    max-height: calc(100vh - 84px);
+    transition: all 0.3s;
+}
+
+input[type="text"]::placeholder {
+  /* Firefox, Chrome, Opera */
+  padding-left: 5px;
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+    #sidebarCollapse span {
+        display: none;
+    }
 }

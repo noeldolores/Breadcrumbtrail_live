@@ -1,4 +1,4 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
 {% block title %}Sign Up{% endblock %}
 
@@ -23,18 +23,18 @@
           <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Enter Last Name"/>
         </div>
         <div class="mb-3">
-          <label for="password1" class="text-black">Password</label>
-          <input type="password" autocomplete="new-password" class="form-control" id="password1" name="password1" placeholder="Enter password"/>
+          <label for="password1" class="text-black">Create Password</label>
+          <input type="password" autocomplete="new-password" class="form-control" id="password1" name="password1" placeholder="Must be at least 7 characters."/>
         </div>
         <div class="mb-3">
           <label for="password2" class="text-black">Confirm Password</label>
-          <input type="password" autocomplete="new-password" class="form-control" id="password2" name="password2" placeholder="Enter password"/>
+          <input type="password" autocomplete="new-password" class="form-control" id="password2" name="password2" placeholder="Confirm password"/>
         </div>
         <br />
         <div class="container">
           <div class="row justify-content-around">
             <div class="col-8">
-              <button type="submit" style="width:100%;" class="btn btn-primary">Submit</button>
+              <button type="submit" style="width:100%;" class="btn btn-primary" name="signup_button">Submit</button>
             </div>
           </div>
         </div>
