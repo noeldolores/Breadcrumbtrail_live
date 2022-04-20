@@ -6,13 +6,22 @@ Built for those who wish to unplug from social platforms while off-the-grid hiki
 
 This is the second website that I am proud to have brought online as I continue my journey to learn Python/WebDev and related programming languages. Please, feel free to send any advice/pull-requests my way, so I can continue to improve.
 
-## When creating your free account, you will be provided a Map-ID and a Private-Key
+## Features / About
+  * Nearly unlimited trail creation
+  * Remote check-in via email/text
+  * 3-layer interactive map provided by [Leaflet](https://leafletjs.com/)
+  * Public access to user trails via shared Map-ID
+  * Backed by a SQLAlchemy databse
+  * API-sourced info from [OpenWeather](https://openweathermap.org/api), [MapQuest](https://developer.mapquest.com/), and [MapBox](https://docs.mapbox.com/api/overview/)
+  * Hosting by [PythonAnywhere](https://www.pythonanywhere.com/)
 
-The <b>Map-ID</b> is for sharing, and can be searched to display your Trails with no login needed. You can also hide, delete, and change which Trails you have active with ease.
+### When creating your account, you will be provided a Map-ID and a Private-Key
 
-The <b>Private-Key</b> is how you check in on your journey. You can text or email your Private-Key, your coordinates, and an optional message to check-in@breadcrumbtrail.app - and the Python-powered Back-End takes care of the rest. For those with Satellite Travel devices, such as the Garmin inReach (not sponsored), with a contact-checkin feature, simply add the check-in email to your contacts list.
+  * The <b>Map-ID</b> is for sharing, and can be searched to display your Trails with no login needed. You can also hide, delete, and change which Trails you have active with ease.
 
-## Step-by-Step
+  * The <b>Private-Key</b> is how you check in on your journey. You can text or email your Private-Key, your coordinates, and an optional message to check-in@breadcrumbtrail.app - and the Python-powered Back-End takes care of the rest. For those with Satellite Travel devices, such as the Garmin inReach (not sponsored), with a contact-checkin feature, simply add the check-in email to your contacts list.
+
+### Step-by-Step
 
   * Create your account at https://www.breadcrumbtrail.app/signup
   * Click on your Map-ID (EXAMPLE#1234) at the top of the screen to view your Settings page, and take note of your Private-Key (EX#3456)
