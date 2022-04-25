@@ -2,29 +2,103 @@
 
 {% block title %}BreadcrumbTrail{% endblock %}
 
-
 {% block head %}
 
-{% block script_head %}{% endblock %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+crossorigin=""></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 
 {% endblock %}
 
-
 {% block content %}
-  {% if user %}
-    {% if user.is_authenticated %}
-    <div class="container">
-      <div class="row justify-content-around">
-        <div class="col-s-12 col-md-6 col-lg-5 topcol">
+<div id="content">
+  <div class='col custom-popup map-frame'id="map"></div>
+</div>
 
-        </div>
-      </div>
-    </div>
-    {% endif %}
-  {% else %}
-  
-  {% endif %}
+{% block script_body %}
+<script>
+  var latlngs = [
+    [39.0911,-94.4155],
+    [42.4935,-107.1318],
+    [43.6161,-116.1903],
+    [45.3556,-122.6059]
+  ];
 
-{% block script_body %}{% endblock %}
+  var checkin_icon = L.icon({
+    iconUrl: '/static/images/dot.png',
+    iconSize: [24, 24],
+    iconAnchor: [12,12],
+    popupAnchor: [0, -8]
+  });
 
+  var map = L.map('map', {
+    center: latlngs[3],
+    zoom: 7
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  var popup_data_0 = `
+      <h3 style="text-align: center;">Welcome to BreadcrumbTrail</h3> <hr style="background-color:white">
+      <h5 style="text-align: center;">Your Minimal<br>
+      Adventure Tracker<br>
+      <hr style="background-color:white">
+      Follow the Trail and<br>
+      Click the Markers<br>
+      to Learn More!
+      </h2>
+    `;
+  var popup_data_1 = `
+    <h4 style="text-align: center;">Create!</h4> <hr style="background-color:white">
+    <h5 style="text-align: center;">Nearly Unlimited Trails<br>
+    <hr style="background-color:white">
+    Give Them a Memorable Name,<br>
+    Like "The Oregon Trail"!
+    <hr style="background-color:white">
+    One Click to Add, Hide, or<br>
+    Delete Your Trails
+    </h2>
+  `;
+  var popup_data_2 = `
+    <h3 style="text-align: center;">Check-In!</h4> <hr style="background-color:white">
+    <h5 style="text-align: center;">Online:<br>
+    Select Your Trail,<br>
+    Enter a Message,<br>
+    and Press Check-in<br>
+    <hr style="background-color:white">
+    Email or Text:<br>
+    Send Your Private ID,<br>
+    Coordinates, and a Message<br>
+    <hr style="background-color:white">
+    Also Compatible with<br>
+    Satellite Communicators<br>
+    </h2>
+  `;
+  var popup_data_3 = `
+    <h3 style="text-align: center;">Share!</h4> <hr style="background-color:white">
+    <h5 style="text-align: center;">Give Your Friends<br>
+    and Family Your Map ID<br>
+    So They Can Follow<br>
+    Your Trails and Markers!<br>
+    <hr style="background-color:white">
+    <a href="/signup" target="_blank">Create</a> a Free Account<br>
+    to Start Leaving Breadcrumbs!
+    </h2>
+  `;
+
+  L.marker(latlngs[0], {icon:checkin_icon}).addTo(map).bindPopup(popup_data_3);
+  L.marker(latlngs[1], {icon:checkin_icon}).addTo(map).bindPopup(popup_data_2);
+  L.marker(latlngs[2], {icon:checkin_icon}).addTo(map).bindPopup(popup_data_1);
+  L.marker(latlngs[3]).addTo(map).bindPopup(popup_data_0).openPopup();
+
+  var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+</script>
+
+{% endblock %}
 {% endblock %}

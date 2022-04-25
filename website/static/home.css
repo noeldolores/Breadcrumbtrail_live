@@ -1,0 +1,29 @@
+#map {
+  height: calc(100vh - 82px); /* 29px: footer height, 54px: navbar height*/
+  margin-top: 1px;
+  margin-bottom: 1px;
+  z-index:0;
+}
+
+@media (max-width: 500px) {
+  #map {
+    height: 87vh;
+    max-width:auto;
+  }
+}
+
+.custom-popup, .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background:#343a40;
+  color:#fff;
+  font-size:16px;
+  line-height:24px;
+  outline: #fff solid 1px;
+  text-align: left;
+}
+
+#content {
+    position: relative;
+    width: 100%;
+    max-height: calc(100vh - 84px);
+    transition: all 0.3s;
+}

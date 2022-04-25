@@ -237,7 +237,13 @@ def load_user_trails(sql_trails):
 def redirect_to_home():
   if current_user.is_authenticated:
     return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
-  return redirect(url_for('views.home'))
+
+  if request.method == 'POST':
+    if request.form.keys() >= {'search_button'}:
+      user_match = user_search()
+      if user_match:
+        return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
+  return render_template('home.html')
 
 
 @views.route('/home', methods=['GET', 'POST'])
