@@ -233,7 +233,7 @@ def load_user_trails(sql_trails):
   return user_trails
 
 
-@views.route('/')
+@views.route('/', methods=['GET', 'POST'])
 def redirect_to_home():
   if current_user.is_authenticated:
     return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
@@ -249,9 +249,10 @@ def redirect_to_home():
 @views.route('/home', methods=['GET', 'POST'])
 def home():
   if request.method == 'POST':
-    user_match = user_search()
-    if user_match:
-      return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
+    if request.form.keys() >= {'search_button'}:
+      user_match = user_search()
+      if user_match:
+        return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
   user_trails = None
 
@@ -264,10 +265,10 @@ def user_trail(user_mapId):
 
   if user_match:
     if current_user.is_authenticated:
-      user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
+      user_trails = Trail.query.join(User, Trail.user_id==user_match.id).all()
 
-      if current_user.current_trail:
-        active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
+      if user_match.current_trail:
+        active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
         active_trail = load_active_trail(active_trail_match)
 
       elif len(user_trails) == 1:
@@ -297,10 +298,12 @@ def user_trail(user_mapId):
 
         selected_trail = select_trail()
         if selected_trail:
-          current_user.current_trail = selected_trail
-          db.session.commit()
-          active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==selected_trail).first()
+          if current_user.id == user_match.id:
+            current_user.current_trail = selected_trail
+            db.session.commit()
+          active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
           active_trail = load_active_trail(active_trail_match)
+
 
         if "test_button" in request.form:
           email_bot.main()
@@ -327,7 +330,7 @@ def user_trail(user_mapId):
 
     load_dotenv()
     mapbox_api = os.getenv('MAPBOX_API')
-    return render_template('user_map.html', user=current_user, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'], mapbox_api=mapbox_api)
+    return render_template('user_map.html', user=current_user, match=user_match, user_trails=user_trails, active_trail=active_trail, unitmeasure=settings['unitmeasure'], mapbox_api=mapbox_api)
   else:
     return redirect(url_for('views.home'))
 

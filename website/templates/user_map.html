@@ -56,26 +56,28 @@ crossorigin=""></script>
           <h5 style="text-align: center">Note: {{ active_trail['markers'][0]['note'] }}</h5>
         {% endif %}
       {% else %}
-        <h2 style="text-align: center; margin-top: 0.5rem">Create a Trail</h2>
+        <h2 style="text-align: center; margin-top: 0.5rem">No Trails</h2>
       {% endif %}
 
       {% if user %}
         {% if user.is_authenticated %}
-        <hr>
-        <form class="trail_list" method="POST">
-          {% if user_trails is not none %}
-            {% if user_trails|length == 0 %}
-            <h3>Welcome!</h3>
-            <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
-            <button class="btn btn-success sidebar_buttons" type="submit" name="create_trail">Create</button>
-            {% else %}
-            <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
-            <button class="btn btn-outline-success sidebar_buttons" type="submit" name="create_trail">New Trail</button>
-            <!--Development Only
-            <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>-->
+          {% if user.id == match.id %}
+          <hr>
+          <form class="trail_list" method="POST">
+            {% if user_trails is not none %}
+              {% if user_trails|length == 0 %}
+              <h3 style="text-align:center">Create a Trail!</h3>
+              <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+              <button class="btn btn-success sidebar_buttons" type="submit" name="create_trail">Create</button>
+              {% else %}
+              <input class="form-control sidebar_buttons" type="text" name="new_trail_name" placeholder="Trail Name" aria-label="Trail Name">
+              <button class="btn btn-outline-success sidebar_buttons" type="submit" name="create_trail">New Trail</button>
+              <!--Development Only
+              <button class="btn btn-outline-success sidebar_buttons" type="submit" name="test_button">Test</button>-->
+              {% endif %}
             {% endif %}
+          </form>
           {% endif %}
-        </form>
         {% endif %}
       {% endif %}
 
