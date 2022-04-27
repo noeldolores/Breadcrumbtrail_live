@@ -439,7 +439,7 @@ def deleteaccount():
           if check_password_hash(current_user.password, password1):
             db.session.delete(current_user)
             db.session.commit()
-            return redirect(url_for('views.home'))
+            return redirect(url_for('views.redirect_to_home'))
           else:
             flash('Incorrect Password, please try again.', category='error')
         else:

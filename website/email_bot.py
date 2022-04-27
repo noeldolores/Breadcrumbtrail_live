@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import re
-from . import db, emailfunctions
+from . import db
 from .models import User, Marker, Trail
-from config import Config
+from imap_tools import AND
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -12,10 +12,31 @@ import os
 from dotenv import load_dotenv
 
 
+def get_unread_message_info(mailbox):
+  unread_mail = mailbox.fetch(AND(seen=False))
+  mail_list = []
+  for mail in unread_mail:
+    mail_list.append(
+      {
+        "ID": mail.uid,
+        "sender": mail.from_,
+        "date": mail.date,
+        "message_body": mail.text.replace('\r\n', ' ')
+      }
+    )
+  return mail_list
 
-def main():
-  mailbox = emailfunctions.connect_to_mail()
-  message_info_list = emailfunctions.get_unread_message_info(mailbox)
+
+def delete_processed_email(mailbox, email_id):
+  try:
+    mailbox.delete(email_id)
+    return email_id
+  except:
+    return None
+
+
+def main(mailbox):
+  message_info_list = get_unread_message_info(mailbox)
 
   if len(message_info_list) > 0:
     for message in message_info_list:
@@ -39,7 +60,10 @@ def main():
           user_trail = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
 
           # Marker number
-          marker_num = len(user_trail.markers) + 1
+          if user_trail.markers:
+            marker_num = len(user_trail.markers) + 1
+          else:
+            marker_num = 1
 
           # Coordinates Parse
           coordinates = {
@@ -78,7 +102,7 @@ def main():
 
         # Note Parse
         note = ""
-        note_parse = re.search(r"message:[\"|\']([\s\S]*)[\"|\']", message_body)
+        note_parse = re.search(r"message:\s?[\"|\“|\”|\'|\‘|\’]([\s\S]*)[\"|\“|\”|\'|\‘|\’]", message_body)
         if note_parse:
           full_note = note_parse.group(1)
           if len(full_note) > 300:
@@ -162,7 +186,11 @@ def main():
         db.session.commit()
 
         # Delete Message
-        emailfunctions.delete_processed_email(mailbox, ID)
+        deleted = delete_processed_email(mailbox, ID)
+        if deleted:
+          print(f"{deleted} was successfully deleted.")
+        else:
+          print(f"{deleted} was not deleted.")
 
       else:
         print("Unable to parse sender info")
@@ -170,5 +198,6 @@ def main():
   else:
     print("No messages to process")
 
+
 if __name__ == "__main__":
-  main()
+  main(mailbox)
