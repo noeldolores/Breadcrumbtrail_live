@@ -97,8 +97,7 @@ crossorigin=""></script>
           {%if active_trail %}
           <button class="btn btn-outline-primary sidebar_buttons" type="submit" name="select_trail" value="{{active_trail['id']}}">{{active_trail['name']}}</button>
           {% endif %}
-
-          <!--<ul class="list-unstyled components">-->
+          {% if user_trails|length > 1%}
             <div class="active list-unstyled components">
               <div href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle" id="trail_dropdown">Other Trails</div>
                 <ul class="collapse list-unstyled" id="homeSubmenu">
@@ -113,7 +112,7 @@ crossorigin=""></script>
                 {% endfor %}
               </ul>
             </div>
-          <!--</ul>-->
+          {% endif %}
         {% endif %}
       {% endif %}
       </form>
