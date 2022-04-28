@@ -24,15 +24,20 @@ crossorigin=""></script>
 
         {% if user %}
           {% if user.is_authenticated %}
-          <!--In Development
-          <hr>
-          <form class="form-inline savelocation" method="POST">
-            <button class="btn btn-primary" type="submit" name="save_location">Check-In</button>
-          </form>-->
+            {% if user.id == match.id %}
+            <!--In Development-->
+            <hr>
+            <form class="form-inline savelocation" method="POST">
+              <input class="form-control sidebar_buttons" type="number" style="width:100%" name="latitude" min="-90" max="90" placeholder="Latitude" aria-label="Latitude">
+              <input class="form-control sidebar_buttons" type="number" style="width:100%"name="longitude" min="-180" max="180" placeholder="Longitude" aria-label="Longitude">
+              <input class="form-control sidebar_buttons" style="width:100%" type="text" name="note" maxlength="300" placeholder="Note (optional)" aria-label="Note">
+              <button class="btn btn-primary" style="margin-top:5px" type="submit" name="save_location">Check-In</button>
+            </form>
+            {% endif %}
           {% endif %}
         {% endif %}
 
-        <!--Current Route: Most Recent Marker-->
+        <!--Current Route: Most Recent Marker
         {% if active_trail['markers'] %}
         <hr>
         <h4 style="text-align: center; margin-top: 5px">Check-In #{{ active_trail['markers'][0]['marker_num'] }}</h4>
@@ -54,7 +59,7 @@ crossorigin=""></script>
           <h5 style="text-align: center">Humidity: {{ active_trail['markers'][0]['humidity'] }}%</h5>
           <h5 style="text-align: center">Air Quality: {{ active_trail['markers'][0]['airquality'] }}</h5>
           <h5 style="text-align: center">Note: {{ active_trail['markers'][0]['note'] }}</h5>
-        {% endif %}
+        {% endif %}-->
       {% else %}
         <h2 style="text-align: center; margin-top: 0.5rem">No Trails</h2>
       {% endif %}
@@ -133,11 +138,6 @@ crossorigin=""></script>
   <!-- Center on first coordinate -->
   <script>
     var marker_data = JSON.parse('{{active_trail | tojson}}');
-
-
-    //var classic = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    //    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-   // });
 
     var osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
     var osmAtt = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

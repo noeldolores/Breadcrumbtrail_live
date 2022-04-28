@@ -94,7 +94,6 @@ def login_request():
   return None
 
 
-
 def send_reset_email(user):
   token = user.get_reset_token()
   msg = Message('Password Reset Request',

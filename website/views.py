@@ -1,16 +1,37 @@
 from flask import Blueprint, request, flash, render_template, redirect, url_for, escape
 from flask_login import current_user, login_required
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
+from .api_functions import request_weather, request_elevation, request_air_quality
 from .models import User, Marker, Trail
 import pytz
 from . import email_bot
 import os
 from dotenv import load_dotenv
+from imap_tools import MailBox
+import decimal
 
 views = Blueprint('views', __name__)
+
+
+def manual_update():
+  try:
+    load_dotenv()
+    server = os.getenv('MAIL_SERVER_IMAP')
+    username = os.getenv('MAIL_USERNAME')
+    password = os.getenv('MAIL_PASSWORD')
+    with MailBox(server).login(username, password) as mailbox:
+      email_bot.main(mailbox)
+  except Exception as e:
+    print(f"Error connecting to mailbox: {e}")
+
+
+def convert_utc(utc, timezone):
+  _ = utc.replace(tzinfo=pytz.utc)
+  local_datetime = _.astimezone(pytz.timezone(timezone))
+  return local_datetime
 
 
 def init_user_settings():
@@ -28,8 +49,8 @@ def init_user_settings():
 
 def change_user_settings_request(user_settings):
   changes = []
-  timezone = str(escape(request.form.get('timezone')))
-  unitmeasure = str(escape(request.form.get('unitmeasure')))
+  timezone = str((request.form.get('timezone')))
+  unitmeasure = str((request.form.get('unitmeasure')))
   firstName = str(escape(request.form.get('firstName')))
   lastName = str(escape(request.form.get('lastName')))
   email = str(escape(request.form.get('email')))
@@ -105,6 +126,10 @@ def change_user_settings_request(user_settings):
       user_settings['unitmeasure'] = "Metric"
       changes.append('Units')
 
+  if len(changes) > 0:
+    return (changes, user_settings)
+  return None
+
 
 def user_search():
   if request.form.keys() >= {'search'}:
@@ -116,11 +141,36 @@ def user_search():
 
 
 def trail_checkIn():
-  if 'save_location' in request.form:
+  if request.form.keys() >= {'save_location'}:
+    latitude = str(escape(request.form.get('latitude')))
+    longitude = str(escape(request.form.get('longitude')))
+    note = str(escape(request.form.get('note')))
+    date = datetime.now(timezone.utc)
+    elevation = request_elevation(latitude, longitude)
+    weather = request_weather(latitude, longitude)
+    air_quality = request_air_quality(latitude, longitude)
 
-    return "Location Check-In"
-  else:
-    return "No Check-In Initiated"
+    user_trail = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
+    if user_trail:
+      marker_num = len(user_trail.markers) + 1
+    else:
+      marker_num = 1
+
+    marker = Marker(
+      datetime = date,
+      trail = user_trail,
+      marker_num = marker_num,
+      lat = decimal.Decimal(latitude),
+      lon = decimal.Decimal(longitude),
+      elevation = elevation,
+      temp = weather['temperature'],
+      humidity = weather['humidity'],
+      weather = weather['description'],
+      airquality = air_quality,
+      note = note)
+
+    return marker
+  return None
 
 
 def create_trail():
@@ -171,15 +221,18 @@ def hide_trail():
   return None
 
 
-def list_from_marker_class(markers):
+def list_from_marker_class(markers, timezone):
   marker_list = []
   if len(markers) > 0:
     for marker in markers:
+      local_time = convert_utc(marker.datetime, timezone)
+      print(f"local time {local_time}")
+
       marker_list.append(
         {
           "marker_num": marker.marker_num,
-          "date":marker.datetime.strftime("%m/%d/%Y"),
-          "time":marker.datetime.strftime("%-I:%M%p"),
+          "date":local_time.strftime("%m/%d/%Y"),
+          "time":local_time.strftime("%-I:%M%p"),
           "lat":float("{0:.4f}".format(marker.lat)),
           "lon":float("{0:.4f}".format(marker.lon)),
           "elevation":marker.elevation,
@@ -188,7 +241,7 @@ def list_from_marker_class(markers):
           "airquality":marker.airquality,
           "weather":marker.weather,
           "note":marker.note,
-          "popup": marker.datetime.strftime("%m/%d/%Y %-I:%M%p")
+          "popup": local_time.strftime("%m/%d/%Y %-I:%M%p")
         }
       )
 
@@ -196,9 +249,9 @@ def list_from_marker_class(markers):
   return None
 
 
-def load_active_trail(trail):
+def load_active_trail(trail, timezone):
   try:
-    markers = list_from_marker_class(trail.markers)
+    markers = list_from_marker_class(trail.markers, timezone)
     active_trail = {
       "id": trail.id,
       "name":trail.name,
@@ -217,17 +270,20 @@ def load_active_trail(trail):
     return None
 
 
-def load_user_trails(sql_trails):
+def load_user_trails(sql_trails, timezone):
   user_trails = []
   for trail in sql_trails:
+    local_time = convert_utc(trail.datetime, timezone)
+    print(f"local time {local_time}")
+
     user_trails.append(
       {
         "id": trail.id,
         "name": trail.name,
         "hidden": trail.hidden,
-        "date":trail.datetime.strftime("%b %d, %Y"),
-        "time":trail.datetime.strftime("%-I:%M%p"),
-        "markers": list_from_marker_class(trail.markers)
+        "date":local_time.strftime("%b %d, %Y"),
+        "time":local_time.strftime("%-I:%M%p"),
+        "markers": list_from_marker_class(trail.markers, timezone)
       }
     )
   return user_trails
@@ -264,19 +320,22 @@ def user_trail(user_mapId):
   user_match = User.query.filter_by(mapId=user_mapId).first()
 
   if user_match:
+    settings = json.loads(user_match.settings)
+    user_time = settings['timezone']
+
     if current_user.is_authenticated:
       user_trails = Trail.query.join(User, Trail.user_id==user_match.id).all()
 
       if user_match.current_trail:
         active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
-        active_trail = load_active_trail(active_trail_match)
+        active_trail = load_active_trail(active_trail_match, user_time)
 
       elif len(user_trails) == 1:
         active_trail_match = user_trails[0]
         if active_trail_match.hidden:
           active_trail = None
         else:
-          active_trail = load_active_trail(active_trail_match)
+          active_trail = load_active_trail(active_trail_match, user_time)
       else:
         active_trail = None
 
@@ -286,13 +345,17 @@ def user_trail(user_mapId):
           if user_match:
             return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
-        trail_checkIn()
+        checkIn_request = trail_checkIn()
+        if checkIn_request:
+          db.session.add(checkIn_request)
+          db.session.commit()
+          return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
 
         createTrail_request = create_trail()
         if createTrail_request:
           active_trail_match = createTrail_request
           current_user.current_trail = active_trail_match.id
-          active_trail = load_active_trail(active_trail_match)
+          active_trail = load_active_trail(active_trail_match, user_time)
           db.session.commit()
           return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
 
@@ -302,20 +365,18 @@ def user_trail(user_mapId):
             current_user.current_trail = selected_trail
             db.session.commit()
           active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
-          active_trail = load_active_trail(active_trail_match)
+          active_trail = load_active_trail(active_trail_match, user_time)
 
 
         if "test_button" in request.form:
-          email_bot.main()
+          manual_update()
           return redirect(url_for('views.user_trail',user_mapId=current_user.mapId))
-
-      settings = json.loads(current_user.settings)
     else:
       sql_trails = user_match.trails
-      user_trails = load_user_trails(sql_trails)
+      user_trails = load_user_trails(sql_trails, user_time)
 
       active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==user_match.current_trail).first()
-      active_trail = load_active_trail(active_trail_match)
+      active_trail = load_active_trail(active_trail_match, user_time)
 
       if request.method == 'POST':
         user_mapId_search = user_search()
@@ -325,7 +386,7 @@ def user_trail(user_mapId):
         selected_trail = select_trail()
         if selected_trail:
           active_trail_match = Trail.query.join(User, Trail.user_id==user_match.id).filter(Trail.id==selected_trail).first()
-          active_trail = load_active_trail(active_trail_match)
+          active_trail = load_active_trail(active_trail_match, user_time)
       settings = {'unitmeasure':'Metric'}
 
     load_dotenv()
@@ -339,8 +400,11 @@ def user_trail(user_mapId):
 @login_required
 def manage_trails():
   if current_user.is_authenticated:
+    settings = json.loads(current_user.settings)
+    user_time = settings['timezone']
+
     user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
-    trail_list = load_user_trails(user_trails)
+    trail_list = load_user_trails(user_trails, user_time)
 
     if request.method == 'POST':
       if request.form.keys() >= {'search_button'}:
@@ -363,7 +427,7 @@ def manage_trails():
         db.session.commit()
 
         user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
-        trail_list = load_user_trails(user_trails)
+        trail_list = load_user_trails(user_trails, user_time)
         return render_template('manage_trails.html', user=current_user, user_trails=trail_list)
 
       hide_trail_request = hide_trail()
@@ -376,7 +440,7 @@ def manage_trails():
             current_user.current_trail = hide_trail_request.id
 
         user_trails = Trail.query.join(User, Trail.user_id==current_user.id).all()
-        trail_list = load_user_trails(user_trails)
+        trail_list = load_user_trails(user_trails, user_time)
 
         if current_user.current_trail == hide_trail_request.id:
           active_trail_match = Trail.query.join(User, Trail.user_id==current_user.id).filter(Trail.id==current_user.current_trail).first()
@@ -399,7 +463,6 @@ def manage_trails():
 def usersettings():
   if current_user.is_authenticated:
     user_settings = init_user_settings()
-
     if request.method == 'POST':
       if request.form.keys() >= {'search_button'}:
         user_match = user_search()
