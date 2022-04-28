@@ -244,5 +244,10 @@ crossorigin=""></script>
   });
 </script>
 
+<script>
+window.setTimeout(function() {
+  map.invalidateSize();
+}, 2000);
+</script>
 {% endblock %}
 {% endblock %}
