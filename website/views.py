@@ -315,6 +315,19 @@ def home():
   return render_template('user_map.html', user=current_user, user_trails=user_trails)
 
 
+@views.route('/faq', methods=['GET', 'POST'])
+def faq():
+  if request.method == 'POST':
+    if request.form.keys() >= {'search_button'}:
+      user_match = user_search()
+      if user_match:
+        return redirect(url_for('views.user_trail',user_mapId=user_match.mapId))
+
+  user_trails = None
+
+  return render_template('faq.html', user=current_user, user_trails=user_trails)
+
+
 @views.route('/<user_mapId>', methods=['GET', 'POST'])
 def user_trail(user_mapId):
   user_match = User.query.filter_by(mapId=user_mapId).first()
@@ -482,7 +495,7 @@ def usersettings():
 
     return render_template('usersettings.html', user=current_user, lastName=current_user.lastName, firstName=current_user.firstName, email=current_user.email, settings=user_settings, priv_key=current_user.private_key)
   else:
-    return redirect(url_for('views.home'))
+    return redirect(url_for('views.redirect_to_home'))
 
 
 @views.route('/deleteaccount', methods=['GET', 'POST'])

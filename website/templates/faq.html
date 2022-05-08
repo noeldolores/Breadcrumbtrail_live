@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='faq.css') }}"/>
+<br></br>
+<h1 align="center" class="text-black p-2">How do I ...?</h1>
+<br />
+<div class="container">
+  <div class="active list-unstyled components">
+
+    <div href="#homeSubmenu1" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle faq">Create a Trail</div>
+    <ul class="collapse list-unstyled" id="homeSubmenu1">
+      <li class="info">From your <a href="/" target="_blank">homepage</a>, enter a trail name in the input box labeled <i>Trail Name</i>, and select <i>New Trail</i>, or <i>Create</i> if this is your first trail. Creating a new trail sets it as active.</li>
+    </ul>
+    
+    
+    <div href="#homeSubmenu2" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle faq">Check In</div>
+    <ul class="collapse list-unstyled" id="homeSubmenu2">
+      <li class="info">There are two ways to check in: <b>Online</b> and <b>Remotely</b>. Before using either method, ensure the trail you wish to drop a marker on is set as active.
+        You can change which trail is active by selecting it from the sidebar on your homepage. The active trail name is displayed at the top.
+      </li>
+    </ul>
+    
+
+    <div href="#homeSubmenu3" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle faq">Check In Online</div>
+    <ul class="collapse list-unstyled" id="homeSubmenu3">
+      <li class="info">
+        <p>Enter in your coordinate into the respective <i>Latitude</i> and <i>Longitude</i> input boxes, add an optional message (300) in the <i>Message</i> input box, and select the <i>Check-In</i> button.</p>
+        <p>Auto coordinate retrieval is currently in development.</p>           
+      </li>
+    </ul>
+    
+
+    <div href="#homeSubmenu4" data-toggle="collapse" aria-expanded="false" class="btn btn-outline-dark dropdown-toggle faq">Check In Remotely</div>
+    <ul class="collapse list-unstyled" id="homeSubmenu4">
+      <li class="info">
+        <p>Text or Email your <b>Private Key</b>, <b>Coordinates</b>, and an optional <b>Message</b> to  <a href = "mailto: CheckIn@BreadcrumbTrail.app" target="_blank">CheckIn@BreadcrumbTrail.app</a></p>
+        <p>
+          <div><b>Private Key</b></div>
+          Find your Private Key in <a href={{url_for('views.usersettings')}} target="_blank">User Settings</a>. It is your initials, #, and 4 numbers. Do not share this with anyone else.
+        </p>
+        <p>
+          <div><b>Coordinates</b></div>
+          Coordinates must be written in order of Latitude and Longitude, and can use compass direction indicators (N/North, S/South, etc.). The map system is only accurate to 4 decimal places.
+        </p>
+        <p>
+          <div><b>Message</b></div>
+          Messages are optional, but must be formated in a specific way to be included. Messages are also limited to 300 characters. See the formatting below:
+          <div>message:"Your message here."</div>
+        </p>
+        <p>
+          <div><b>Examples</b></div>
+          <ul>
+            <li>EX#1111 12.3456 -123.4567</li>
+            <li>EX#2222 Lat 12.3456 Lon -123.4567 message:"This is a check-in with a message"</li>
+            <li>EX#3333 12.3456N 123.4567W message:"This is another check-in that works"</li>
+            <li>Private key is EX#4444. My coordinates are 12.3456 north, and  123.4567 west. Here is my note - message:"Here is an example check-in with extra spacing and characters that also works."</li>
+          </ul>
+        </p>
+      </li>
+    </ul>
+    
+  </div>
+</div>
+
+<br></br>
+{% endblock %}

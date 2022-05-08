@@ -30,7 +30,7 @@ crossorigin=""></script>
             <form class="form-inline savelocation" method="POST">
               <input class="form-control sidebar_buttons" type="number" style="width:100%" name="latitude" min="-90" max="90" placeholder="Latitude" aria-label="Latitude">
               <input class="form-control sidebar_buttons" type="number" style="width:100%"name="longitude" min="-180" max="180" placeholder="Longitude" aria-label="Longitude">
-              <input class="form-control sidebar_buttons" style="width:100%" type="text" name="note" maxlength="300" placeholder="Note (optional)" aria-label="Note">
+              <input class="form-control sidebar_buttons" style="width:100%" type="text" name="note" maxlength="300" placeholder="Message (optional)" aria-label="Note">
               <button class="btn btn-primary" style="margin-top:5px" type="submit" name="save_location">Check-In</button>
             </form>
             {% endif %}
@@ -237,11 +237,11 @@ crossorigin=""></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
 
 <script type="text/javascript">
-  $(document).ready(function () {
-      $('#sidebarCollapse').on('click', function () {
-          $('#sidebar').toggleClass('active');
-      });
-  });
+$(document).ready(function () {
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebar').toggleClass('active');
+    });
+});
 </script>
 
 <script>
